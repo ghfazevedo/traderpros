@@ -26,7 +26,7 @@ Set the path to inputs and outputs
 ```R
 workDirPath = "../"
 dataDirPath = workDirPath + "data/"
-outDirPath = workDirPath + "outputsTEST@/"
+outDirPath = workDirPath + "outputs/"
 outputPrefix = "traderpros"
 popMapPath = dataDirPath + "popmap.tsv"
 treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
