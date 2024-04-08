@@ -442,7 +442,13 @@ SpCompletionRate <- plotTree(tree = tree,
                    line_width = 0.8) + 
   ggplot2::theme(legend.position=c(.1, .9));SpCompletionRate
 
-ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.pdf", sep=""), width = 18, height = 24) 
+ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.pdf", sep=""), width = 18, height = 24)
+ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.png", sep=""), width = 18, height = 24) 
+
+
+```
+
+![Tree with speciation completion rates](./outfig/traderpros.SpCompRates.tree.png) 
 
 # Plot number of speciation events
 eventsTree = readTrees(eventsTreeFile)
