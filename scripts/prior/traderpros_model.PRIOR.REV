@@ -1,0 +1,131 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script sets up the model. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+# Create helpers variables vor the moves and monitors.
+moves = VectorMoves()
+monitors = VectorMonitors()
+
+# Seed number
+if (seed_number!=0){
+  seed(seed_number)
+  }
+
+# Read the tree file
+tree <- readTrees(treePath)[1]
+
+# Get the number of nodes and branches
+n_nodes <- tree.nnodes()
+n_branches <- n_nodes -1
+
+# Read population to species map
+popMap = readDataDelimitedFile(popMapPath, header=TRUE)
+
+# Read trait data
+trait <- readDiscreteCharacterData(traitPath)
+
+# Get number of states
+n_states <- trait.getStateDescriptions().size()
+
+# Global trait transition
+global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
+moves.append( mvScale( global_trans_rate, weight=1 ) )
+
+# Relative Transition with reversible jumps
+n_rates = n_states * (n_states-1)
+relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
+
+moves.append( mvRJSwitch(relative_transition , weight=1.0) )
+moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
+
+is_troglo_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
+
+# Q matrix
+Q := fnFreeK(relative_transition, rescale=TRUE)
+
+# Root prior
+rf <- simplex(rep(1,n_states))
+
+# If you do not want to assume equal probabilities:
+#rf_prior <- rep(1, n_states)
+#rf ~ dnDirichlet( rf_prior )
+#moves.append( mvDirichletSimplex( rf, weight=1 ) )
+
+# The Data Augmented PhyloCTMC
+trait_evol ~ dnPhyloCTMCDASiteIID(tree,
+                                  Q,
+                                  branchRates=global_trans_rate,
+                                  type="Standard",
+                                  nSites=1,
+                                  rootFrequencies=rf)
+
+trait_evol.clamp(trait)
+
+moves.append( mvCharacterHistory(ctmc=trait_evol, 
+                                 qmap_site=Q,
+                                 graph="node",
+                                 proposal="rejection",
+                                 weight=20) )
+moves.append( mvCharacterHistory(ctmc=trait_evol,
+                                 qmap_site=Q,
+                                 graph="branch",
+                                 proposal="rejection",
+                                 weight=20) )
+
+
+# Global Speciation completion rate
+expected_rate := ln(abs(totalSpecies-1))/tree.rootAge()
+sd_real <- exp(lognormal_sd)
+mean := ln(abs(expected_rate)) + ln(sd_real)^2
+SpeciationComplRate ~ dnLognormal(abs(mean), lognormal_sd)
+SpeciationComplRate.setValue(expected_rate)
+
+moves.append(mvScale(SpeciationComplRate, weight=1))
+
+# State specific speciation completion rate with reversible jumps
+stateSpecificRateWeights ~ dnReversibleJumpMixture( simplex(rep(1, n_states)), dnDirichlet(rep(1, n_states)), p=0.5 )
+
+moves.append( mvRJSwitch(stateSpecificRateWeights, weight=1.0) )
+moves.append(mvSimplex(stateSpecificRateWeights, weight=1))
+
+is_spCompletion_state_dependent := ifelse( stateSpecificRateWeights == simplex(rep(1, n_states)), 0.0, 1.0)
+
+stateSpecificRates := stateSpecificRateWeights * SpeciationComplRate
+
+# State specific branch rates
+for(i in 1:n_branches) {
+    state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
+}
+
+# The Trait Dependent Rates Protracted Speciation Tree
+TreeSpeciesTip <- tree
+for (i in 1:popMap.size()){
+    TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
+    }
+write(TreeSpeciesTip, filename=outDirPath+outputPrefix+".SpeciesName.tree" )
+
+# Stochastic speciation events on branches
+for (i in 1:(n_branches)){
+    branch_speciation_events[i] ~ dnPoisson(exp(state_branch_rate[i]*TreeSpeciesTip.branchLength(i)))
+    moves.append(mvRandomNaturalWalk(branch_speciation_events[i], weight=1))
+
+}
+
+# The tree with speciation events as branch lengths
+topology <- readBranchLengthTrees(outDirPath+outputPrefix+".SpeciesName.tree")[1]
+SpeciationBranchTree := fnTreeAssembly(topology, branch_speciation_events)
+
+topologyPopNames <- readBranchLengthTrees(treePath)[1]
+SpeciationBranchTreePoNames := fnTreeAssembly(topologyPopNames, branch_speciation_events)
+
+
+# Finalize the model
+
+mymodel = model(branch_speciation_events)

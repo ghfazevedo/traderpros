@@ -1,0 +1,55 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script contains the options to set up the variables for the analyses. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+
+# Seed number to replicate. If you want a random seed set seed_number=0
+seed_number=0
+
+
+# Set the global trait tansition rate
+traRate <- 0.0209
+
+# Set the relative transition rates
+relativeTrans <- simplex(0.5482, 0.4518)
+
+# Indicate the total number of populations (sampled and unsampled)
+n_pops <- 457
+
+# Indicate the total number of known species in the clade for the mode of the speciation completion rate prior
+totalSpecies <- 76
+
+# Set the speciation completion rate
+spCompRate <- 0.1229
+
+#Set the State specific speciation completion rate weights
+rateWeights <- simplex(0.4761, 0.5239 )
+
+## Power Posteriors and Likelihood options
+
+### Number of power posterior categories
+power_categories = 25 
+
+### Number of generations for the burn in
+power_burnin_gen = 10000
+### Tunning interval for the burn in
+power_burnin_interval = 100
+### Number of MCMC generations for the run post burn in. It will runn this number of generation for each power category
+power_generations = 10000
+
+
+# Print to screen every x generations
+n_print_screen = 100
+
+# Print parameters to file every x generations
+n_print_log = 100
+
+# Print tree to file every x generations
+n_print_tree=100

@@ -1,2 +1,547 @@
-# traderpros
- Trait Dependent Rates Protracted Speciation
+# <ins>Tra</ins>it <ins>De</ins>pendent <ins>R</ins>ates <ins>Pro</ins>tracted <ins>S</ins>peciation (TraDeRProS)
+
+## Introduction
+
+## TraDeRProS in RevBayes
+
+### Getting started  
+
+Clone this directory, start RevBayes from your [scripts](./scripts) directory. 
+
+```R
+git clone LINK
+
+cd TraderProS/scripts
+
+rb 
+```
+
+Set seed if you want to replicate the analysis.
+```R
+seed(1)
+```  
+
+Set the path to inputs and outputs  
+
+```R
+workDirPath = "../"
+dataDirPath = workDirPath + "data/"
+outDirPath = workDirPath + "outputsTEST@/"
+outputPrefix = "traderpros"
+popMapPath = dataDirPath + "popmap.tsv"
+treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
+traitPath = dataDirPath + "CicTroglomorphism.nex"
+```
+
+Create helpers variables vor the moves and monitors.
+```R
+moves = VectorMoves()
+monitors = VectorMonitors()
+```  
+
+### The Data
+We first read the tree, the population to species map, the trait data and get some variables to use later. The population to species map is a tab delimited file, with headers, which the first column is the population (the name of the tips in the tree file) and the second column is the species from which the population belongs to. If the species assignment is uncertain, the species name should be "unknown". The algorithm will ignore those for estimating the trait specific rates. Note that the uncertainty is not accounted for here, but could be possible if you sample from all possible (or a few) different species partition.
+
+```R
+# Read the tree file
+tree <- readTrees(treePath)[1]
+
+# Get the number of nodes and branches
+n_nodes <- tree.nnodes()
+n_branches <- n_nodes -1
+
+# Read population to species map
+popMap = readDataDelimitedFile(popMapPath, header=TRUE)
+
+# Read trait data
+trait <- readDiscreteCharacterData(traitPath)
+
+# Get number of states
+n_states <- trait.getStateDescriptions().size()
+```
+  
+### The transition matrix
+
+We first define the prior on the global trait transition rate. We will assume a exponential distribution with mean 0.1. 
+
+```R
+traRate_expoDistrib_parameter <- 10
+global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
+moves.append( mvScale( global_trans_rate, weight=1 ) )
+```
+
+We draw the relative transition rates from a flat Dirichlet distribution. We also create a reversible jump to test if troglomorphism is reversible
+```R
+n_rates = n_states * (n_states-1)
+relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
+
+moves.append( mvRJSwitch(relative_transition , weight=1.0) )
+moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
+
+is_troglo_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
+```
+We can now create our transition rate matrix.
+```R
+Q := fnFreeK(relative_transition, rescale=TRUE)
+```
+
+We also  create a prior for the root state frequency. We assume equal probabilities.
+```R
+rf <- simplex(rep(1,n_states))
+
+# If you do not want to assume equal probabilities:
+#rf_prior <- rep(1, n_states)
+#rf ~ dnDirichlet( rf_prior )
+#moves.append( mvDirichletSimplex( rf, weight=1 ) )
+```
+
+We will use data augmentation to sample the trait history evolution along the tree, similar to what is done [here](https://revbayes.github.io/tutorials/cont_traits/state_dependent_bm.html).  
+
+Now we can create our augmented data matrix DAG node of our model that sample the trait evolution history. We clamp the node to our observed trait matrix.
+```R
+trait_evol ~ dnPhyloCTMCDASiteIID(tree,
+                                  Q,
+                                  branchRates=global_trans_rate,
+                                  type="Standard",
+                                  nSites=1,
+                                  rootFrequencies=rf)
+
+trait_evol.clamp(trait)
+```
+
+We need to create moves for the character history along the branches.
+```R
+moves.append( mvCharacterHistory(ctmc=trait_evol, 
+                                 qmap_site=Q,
+                                 graph="node",
+                                 proposal="rejection",
+                                 weight=20) )
+moves.append( mvCharacterHistory(ctmc=trait_evol,
+                                 qmap_site=Q,
+                                 graph="branch",
+                                 proposal="rejection",
+                                 weight=20) )
+```
+
+### Speciation Completion Rates
+We sample a global rate from an exponential distribution.
+The expected global rate may be given by 'ln(n_species-1)/trootAge()'. That is, if you have a total of 20 species (sampled and unsampled.) in a group that is 5 my old,  you expect at least 19 speciation events in the total time. Therefore the expected speciation completion rate would be around 0.5888878. 
+This is because the number of speciation events in the whole tree is Poisson distributed 'nSpeciationEvents ~ Poisson(exp(expected_speciation_completion_rate*rootAge))'
+We can create a prior distribution centered on the expected rate. Since the value must be positive, we use a Lognormal distribution. We treat the expected rate as the mode of the distribution. We used a standard deviation of 1. If you want a more informative prior you can reduce the sstandard deviation or even use a fixed global rate
+
+
+```R
+totalSpecies <- 76
+lognormal_sd <- 1
+expected_rate := ln(abs(totalSpecies-1))/tree.rootAge()
+sd_real <- exp(lognormal_sd)
+mean := ln(abs(expected_rate)) + ln(sd_real)^2
+SpeciationComplRate ~ dnLognormal(abs(mean), lognormal_sd)
+SpeciationComplRate.setValue(expected_rate)
+
+# if you wanna treat the expected reate as mean, use below instead.
+#SpeciationComplRate ~ dnLognormal(ln(abs(expected_rate)), lognormal_sd)
+#SpeciationComplRate.setValue(expected_rate)
+```  
+We need to create moves to the speciation completion rates
+```R
+moves.append(mvScale(SpeciationComplRate, weight=1))
+```
+
+The global rate is the sum of each state specific rate. To determine the vector of state specific rates, we first draw proportional weights from a Dirichlet distribution with flat prior. Then, we multiply each rate by the global rate to have each state specific rates. We have 14 possible states. We use a reversible jump to test for state dependent rates.
+
+```R
+#stateSpecificRateWeights ~ dnDirichlet(rep(1, n_states))
+#stateSpecificRates := stateSpecificRateWeights * SpeciationComplRate
+
+stateSpecificRateWeights ~ dnReversibleJumpMixture( simplex(rep(1, n_states)), dnDirichlet(rep(1, n_states)), p=0.5 )
+
+moves.append( mvRJSwitch(stateSpecificRateWeights, weight=1.0) )
+moves.append(mvSimplex(stateSpecificRateWeights, weight=1))
+
+is_spCompletion_state_dependent := ifelse( stateSpecificRateWeights == simplex(rep(1, n_states)), 0.0, 1.0)
+
+stateSpecificRates := stateSpecificRateWeights * SpeciationComplRate
+```
+
+The branch specific rates are determined by the relative time spent on each trait in that branch.
+```R
+for(i in 1:n_branches) {
+    state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
+}
+```
+
+## The Trait Dependent Rates Protracted Speciation Tree
+
+We first use our population map to replace the tip names for species names.
+```R
+TreeSpeciesTip <- tree
+for (i in 1:popMap.size()){
+    TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
+    }
+write(TreeSpeciesTip, filename=outDirPath+outputPrefix+".SpeciesName.tree" )
+```
+
+Our model is similar to the one used in [DELINEATE](LINK) (Sukumaran et al.) in the way that assumes that the number of speciation events in each branch is Poisson distributed. The difference is that the rates in each branch will vary according to the state in that branch instead of a single global rate. That is, ```N_speciation_events_branch[*i*] ~ Poisson(exp(state_branch_rate[*i*]*branch_length[*i*]))``` where *i* is the branch in the tree. We know that speciation completion did not happened on branches that connect populations, so we can constrain the number of speciation events to 0. If the branches connects populations of two different species, at least one speciation events must have happened in at least one of the sister branches. Branches that connect populations with unknown status or that connects more than two species are not used, since we cannot constrain the number of speciation events in each branch [FIGURES]().  The number of speciation events on those branches can be co-estimated with the rates.  
+With a set of rules we can visit branches in the tree and set the constraints, and calculate the likelihood of observing the constrained speciation (and no speciation) events in the tree given the ancestral states in each branch, a vector of state specific speciation completion rates and a vector of branch lengths: P(SpeciationEventsConstraints | ancestralStates, stateSpecificRates, BranchLengths). Since we are using a bayesian approach, we can sample from a prior distributions of states, rates and branch lengths to approximate the posterior distribution of the observed speciation and no speciation events: P( ancestralStates, stateSpecificRates, BranchLengths| SpeciationEventsConstraints). Here we will assume the branch lengths as fixed, so we are approximating P( ancestralStates, stateSpecificRates | SpeciationEventsConstraints, BranchLengths).  We can also co-estimate the number of speciation events on the unconstrained branches P( ancestralStates, stateSpecificRates, BranchSpeciationEvents | SpeciationEventsConstraints, BranchLengths).  
+
+> Note: Although paraphyletic species could be used with this approach, our implementation here does not account for paraphyletic species. It can wrongly estimate parameters if paraphyletic species are used. So, do not input paraphyletic species constraints. Paraphyletic species can be inferred, though. 
+
+First we create an stochastic variable to hold the number of speciation events in each branch
+```R
+for (i in 1:(n_branches)){
+    branch_speciation_events[i] ~ dnPoisson(exp(state_branch_rate[i]*TreeSpeciesTip.branchLength(i)))
+}
+```
+
+We now iterate over the tree nodes to clamp the number of speciation events to zero if the node has child branches with descendants belonging to the same species and create moves o the number of speciation events on the other branches.
+
+```R
+iteration=1
+for (i in (tree.ntips()+1):n_nodes){
+    j=iteration++
+    # Visit every internal node i of the tree and get child branches indices and branch lengths
+    c1[j] = TreeSpeciesTip.child(i,1)
+    c2[j]  = TreeSpeciesTip.child(i,2)
+
+    # Get the descendants of each child to know if they connect same or different species
+    c1descendants[j] = TreeSpeciesTip.getDescendantTaxa(c1[j])
+    c2descendants[j] = TreeSpeciesTip.getDescendantTaxa(c2[j])
+
+    # Get a list of descendant species to know if node connects population of same or different species
+    c1splist[j] = [c1descendants[j][1].getName()]
+    if (c1descendants[j].size() > 1){
+        for (n in 2:c1descendants[j].size()){
+        c1splist[j].append([c1descendants[j][n].getName()])
+        }
+    }
+    c1splist[j].unique()
+
+    c2splist[j] = [c2descendants[j][1].getName()]
+    if (c2descendants[j].size() > 1){
+        for (n in 2:c2descendants[j].size()){
+        c2splist[j].append([c2descendants[j][n].getName()])
+        }
+    }
+    c2splist[j].unique()
+
+    # If node connects populations of same species, clamp the observed value to 0 to indicate that no speciation can be observed. It is only applicable if the species has known assignments. If node connects population of different species we assign moves to it so it can be sampled during MCMC.
+    if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE & c2splist[j].contains("unknown")==FALSE) & ( c1splist[j][1] == c2splist[j][1])) {
+        branch_speciation_events[c1[j]].clamp(0)
+        branch_speciation_events[c2[j]].clamp(0)
+    } else {
+        moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
+        moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
+    }
+}
+```
+
+Now we create the likelihood of observing constrained speciation events. As we mentioned before, at least one speciation event must have occurred in the tree path connecting two species.
+  
+We create a new tree to modify the branch lengths according to the number of speciation events
+```R
+topology <- readBranchLengthTrees(outDirPath+outputPrefix+".SpeciesName.tree")[1]
+SpeciationBranchTree := fnTreeAssembly(topology, branch_speciation_events)
+
+topologyPopNames <- readBranchLengthTrees(treePath)[1]
+SpeciationBranchTreePoNames := fnTreeAssembly(topologyPopNames, branch_speciation_events)
+```
+Now we can create a likelihood function to constrain the search to speciation history congruent with the observed species limits. We create a pairwise distance matrix between all tips in the tree with branch lengths representing sampled speciation events. If the distance between two tips with different species assignments is zero, it means that the likelihood of observing that speciation history is zero. Therefore, the number of speciation events must be between 1 and the maximum number of events allowed. We set the maximum allowed to be the number of species in the group minus 1. You can reduce that, since we only sample ~24 species and that many speciation events between to tips might unlikely.
+
+```R
+distanceMatrix := fnTreePairwiseDistances(SpeciationBranchTree)
+
+index=1
+maxSpeciationConnectingTwoTips = totalSpecies-1
+for (i in 1:distanceMatrix.size()){
+    for (j in 1:distanceMatrix.size()){
+      if ((distanceMatrix.names()[i] != distanceMatrix.names()[j]) & (distanceMatrix.names()[i]!= "unknown" & distanceMatrix.names()[j]!= "unknown")){
+        m=index++
+        constraintViolation[m] ~ dnUniformInteger(int(distanceMatrix.matrix()[i][j]- maxSpeciationConnectingTwoTips),
+                                                    int(distanceMatrix.matrix()[i][j]- 1))
+        constraintViolation[m].clamp(0) 
+      }
+    }
+}
+```
+
+
+We can now finalize our model 
+```R
+mymodel = model(branch_speciation_events)
+```
+
+### The MCMC
+Define the number of generations, burn in and print frequency
+```R
+## Number of generations
+n_gen = 1000000
+## Print to screen every x generations
+n_print_screen = 1000
+## Print parameters to file every x generations
+n_print_log = 1000
+## Print tree to file every x generations
+n_print_tree=1000
+## Number of independent runs
+n_runs = 1
+## Create checkpoint file every x generations
+n_check_interval = 1000
+## Burn in
+burnin_percentage = 0.10 
+```
+
+Monitor variables of interest
+```R
+# print to screen
+monitors.append( mnScreen(printgen=n_print_screen) )
+
+# Monitor all parameters
+monitors.append( mnModel(file=outDirPath+outputPrefix+".model.log", 
+                          printgen=n_print_log) )
+
+# monitor rates
+monitors.append( mnFile(SpeciationComplRate, stateSpecificRates,
+                        filename=outDirPath+outputPrefix+".Rates.log",
+                        printgen=n_print_log) )
+
+# monitor reversible jumps hypotheses
+monitors.append( mnFile(is_troglo_reversible, 
+                        is_spCompletion_state_dependent,
+                        filename=outDirPath+outputPrefix+".RJ.log",
+                        printgen=n_print_log) )
+
+# Monitor tree with speciation events
+monitors.append( mnFile(SpeciationBranchTreePoNames, 
+                        filename=outDirPath+outputPrefix+".EventsTree.log", 
+                        printgen=n_print_tree) )
+
+# Monitor trait evolution
+monitors.append( mnFile( tree, filename=outDirPath+outputPrefix+".tre", 
+                        printgen=n_print_tree) )
+
+monitors.append( mnCharacterHistorySummary( filename=outDirPath+outputPrefix+".history.txt",
+                                            ctmc=trait_evol,
+                                            tree=tree,
+                                            printgen=n_print_tree ) )
+
+monitors.append(mnCharHistoryNewick(ctmc=trait_evol,
+                                    tree=tree,
+                                    filename=outDirPath+outputPrefix+".history.nwck", 
+                                    printgen=n_print_tree ) )
+
+
+# Monitor tree with speciation completion branch rates
+monitors.append( mnExtNewick(
+                 filename=outDirPath+outputPrefix+".SpCompletionRates.trees",
+                 isNodeParameter=TRUE,
+                 printgen=n_print_tree,
+                 separator=TAB,
+                 tree=tree,
+                 state_branch_rate
+                 ))
+
+# Monitor tree with branch speciation events
+monitors.append( mnExtNewick(
+                 filename=outDirPath+outputPrefix+".SpeciationEvents.trees",
+                 isNodeParameter=TRUE,
+                 printgen=n_print_tree,
+                 separator=TAB,
+                 tree=tree, 
+                 branch_speciation_events
+                 ) )
+
+# monitor speciation events
+monitors.append( mnFile(branch_speciation_events,
+                        filename=outDirPath+outputPrefix+".SpeciationEvents.log",
+                        printgen=n_print_log) )
+```
+
+
+Now we can create the MCMC object and run
+
+```R
+mymcmc = mcmc(mymodel, monitors, moves, nruns=n_runs, combine="mixed")
+
+mymcmc.burnin(generations = burnin_percentage*n_gen, tuningInterval = burnin_percentage*n_gen*0.1)
+
+mymcmc.run(n_gen, checkpointFile=outDirPath+outputPrefix+".checkpoint", 
+           checkpointInterval= n_check_interval )
+```
+
+## Process results
+
+We can now summarize the results
+
+```R
+# Summarize tree with branch lengths in number of speciation events 
+treeTrace = readTreeTrace(outDirPath+outputPrefix+".EventsTree.log",
+            burnin=burnin_percentage )
+mapTree(treeTrace,
+        file=outDirPath+outputPrefix+".EventsTree.MAP.tre",
+        ccAges=TRUE,
+        ccp=TRUE,
+        conditionalAges=TRUE,
+        mean=FALSE,
+        sampledAncestors=FALSE,
+        positiveBranchLengths=FALSE)
+
+# Summarize tree with info on number of speciation events
+treeTrace2 = readTreeTrace(outDirPath+outputPrefix+".SpeciationEvents.trees",
+            burnin=burnin_percentage )
+mapTree(treeTrace2,
+        file=outDirPath+outputPrefix+".SpeciationEvents.MAP.tre",
+        mean=FALSE
+        )
+# The output needs some modification. We use a bash command to do it.
+system("sed -i 's/=1}/}/g' ../outputs/*.SpeciationEvents.MAP.tre")
+
+
+# Summarize tree with speciation completion rates
+treeTrace3 = readTreeTrace(outDirPath+outputPrefix+".SpCompletionRates.trees",
+            burnin=burnin_percentage )
+mapTree(treeTrace3,
+        file=outDirPath+outputPrefix+".SpCompletionRates.MAP.tre")
+```
+
+## Plot results with RevGadgets
+
+Open R
+
+
+```R
+library(ggplot2)
+library(RevGadgets)
+library(RColorBrewer)
+library(viridis)
+
+# output and input directories
+outFigsDir = "../outfigs/"
+inputFilesDir = "../outputs/"
+
+# files
+treeFile = paste(inputFilesDir,"traderpros.SpCompletionRates.MAP.tre", sep = "")
+eventsTreeFile = paste(inputFilesDir, "traderpros.SpeciationEvents.MAP.tre", sep = "")
+traceFile = paste(inputFilesDir,  "traderpros.model.log", sep = "")
+
+# burnin percentege
+burn = 0.10
+
+# Plot tree with rates
+tree = readTrees(treeFile)
+
+pal_name <- "RdYlBu"
+ratecolors <- brewer.pal(n = 11, name = pal_name)
+
+SpCompletionRate <- plotTree(tree = tree, 
+                   node_age_bars = FALSE,
+                   node_pp = FALSE, 
+                   tip_labels = TRUE,
+                   tip_labels_size = 3,
+                   color_branch_by = "state_branch_rate",
+                   branch_color=c(ratecolors[11], ratecolors[2]),
+                   line_width = 0.8) + 
+  ggplot2::theme(legend.position=c(.1, .9));SpCompletionRate
+
+ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.pdf", sep=""), width = 18, height = 24) 
+
+# Plot number of speciation events
+eventsTree = readTrees(eventsTreeFile)
+
+pal_name <- "RdYlBu"
+colors <- brewer.pal(n = 11, name = pal_name)
+
+sp_eventsTree <- plotTree(tree=eventsTree,
+         node_age_bars = FALSE,
+         node_pp = FALSE,
+         tip_labels = TRUE,
+         tip_labels_size = 3,
+         color_branch_by = "branch_speciation_events",
+         branch_color=c(colors[10], colors[2]),
+         line_width = 0.8) +
+  ggplot2::theme(legend.position=c(.1, .9));sp_eventsTree         
+
+ggsave(sp_eventsTree,file=paste(outFigsDir, "traderpros.SpEvents.tree.pdf", sep=""), width = 18, height = 24) 
+
+
+# Plot Trace
+traceModel <- readTrace(traceFile)
+
+
+plotSpCompl <- plotTrace(trace = traceModel, 
+                       vars = c("stateSpecificRates[1]","stateSpecificRates[2]"));plotSpCompl 
+
+ggsave(file=paste(outFigsDir, "traderpros.StateSpecificRates.posterior.pdf", sep="")) 
+
+
+
+# Plot reversible jump hypotheses
+plotSPComplRJ <- plotTrace(trace = traceModel, 
+                             vars = c("is_spCompletion_state_dependent"));plotSPComplRJ
+ggsave(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.posterior.pdf", sep="")) 
+
+
+plotSPComplPost <- plotTrace(trace = traceModel, 
+                           vars = c("SpeciationComplRate"));plotSPComplPost
+ggsave(file=paste(outFigsDir, "traderpros.SPCompletion.posterior.pdf", sep="")) 
+
+
+plotstateSpecificSPComplPost <- plotTrace(trace = traceModel, 
+                             vars = c("stateSpecificRateWeights[1]", "stateSpecificRateWeights[2]"));plotstateSpecificSPComplPost
+
+ggsave(file=paste(outFigsDir, "traderpros.stateSpecificSPCompl.posterior.pdf", sep="")) 
+
+
+traceModel[1]$stateSpecificRateWeights[1]
+
+plotTrogloRJ <- plotTrace(trace = traceModel, 
+                           vars = c("is_troglo_reversible"));plotTrogloRJ
+ggsave(file=paste(outFigsDir, "traderpros.RJTroglRever.posterior.pdf", sep="")) 
+
+
+plotRelTrasn <- plotTrace(trace = traceModel, 
+                          vars = c("relative_transition[1]","relative_transition[2]"));plotRelTrasn
+ggsave(file=paste(outFigsDir, "traderpros.RelatTrans.posterior.pdf", sep="")) 
+
+plotTrasn <- plotTrace(trace = traceModel, 
+                          vars = c("global_trans_rate"));plotTrasn
+ggsave(file=paste(outFigsDir, "traderpros.TransRates.posterior.pdf", sep="")) 
+
+
+
+# Plot speciation events for target branches
+spEventProbBr115 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[115]"));spEventProbBr115
+
+spEventProbBr116 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[116]"));spEventProbBr116
+
+spEventProbBr117 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[117]"));spEventProbBr117
+
+spEventProbBr118 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[118]"));spEventProbBr118
+
+spEventProbBr119 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[119]"));spEventProbBr119
+
+spEventProbBr127 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[127]"));spEventProbBr127
+
+spEventProbBr128 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[128]"));spEventProbBr128
+
+spEventProbBr129 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[129]"));spEventProbBr129
+
+spEventProbBr141 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[141]"));spEventProbBr141
+
+spEventProbBr140 <- plotTrace(trace = traceModel, 
+                              vars = c("branch_speciation_events[140]"));spEventProbBr140
+
+```
+
+
+
+
+## Species delimitation tests

@@ -1,0 +1,50 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script runs the MCMC and process the outputs. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+# The MCMC
+mymcmc = mcmc(mymodel, monitors, moves, nruns=n_runs, combine="mixed")
+
+#mymcmc.burnin(generations = burnin_percentage*n_gen, tuningInterval = burnin_percentage*n_gen*0.1)
+
+mymcmc.run(n_gen, checkpointFile=outDirPath+outputPrefix+".checkpoint", 
+           checkpointInterval= n_check_interval )
+
+# Process results
+
+# Summarize tree with branch lengths in number of speciation events 
+treeTrace = readTreeTrace(outDirPath+outputPrefix+".EventsTree.log",
+            burnin=burnin_percentage )
+mapTree(treeTrace,
+        file=outDirPath+outputPrefix+".EventsTree.MAP.tre",
+        ccAges=TRUE,
+        ccp=TRUE,
+        conditionalAges=TRUE,
+        mean=FALSE,
+        sampledAncestors=FALSE,
+        positiveBranchLengths=FALSE)
+
+# Summarize tree with number of speciation events
+treeTrace2 = readTreeTrace(outDirPath+outputPrefix+".SpeciationEvents.trees",
+            burnin=burnin_percentage )
+mapTree(treeTrace2,
+        file=outDirPath+outputPrefix+".SpeciationEvents.MAP.tre",
+        mean=FALSE
+        )
+# The output needs some modification. We use a bash command to do it.
+system("sed -i 's/=1}/}/g' ../outputs/*.SpeciationEvents.MAP.tre")
+
+
+# Summarize tree with speciation completion rates
+treeTrace3 = readTreeTrace(outDirPath+outputPrefix+".SpCompletionRates.trees",
+            burnin=burnin_percentage )
+mapTree(treeTrace3,
+        file=outDirPath+outputPrefix+".SpCompletionRates.MAP.tre")
+

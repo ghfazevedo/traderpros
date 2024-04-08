@@ -1,0 +1,107 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script runs the MCMC under the prior. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+# Load set up
+source("traderpros_setupPRIOR.REV")
+
+# Load model
+source("traderpros_model.PRIOR.REV")
+
+# print to screen
+monitors.append( mnScreen(printgen=n_print_screen) )
+
+# Monitor all parameters
+monitors.append( mnModel(file=outDirPath+outputPrefix+".model.PRIOR.log", 
+                          printgen=n_print_log) )
+
+# monitor rates
+monitors.append( mnFile(SpeciationComplRate, stateSpecificRates,
+                        filename=outDirPath+outputPrefix+".Rates.PRIOR.log",
+                        printgen=n_print_log) )
+
+# monitor reversible jumps hypotheses
+monitors.append( mnFile(is_troglo_reversible, 
+                        is_spCompletion_state_dependent,
+                        filename=outDirPath+outputPrefix+".RJ.PRIOR.log",
+                        printgen=n_print_log) )
+
+# Monitor tree with speciation events and branch lengths
+monitors.append( mnFile(SpeciationBranchTreePoNames, 
+                        filename=outDirPath+outputPrefix+".EventsTree.PRIOR.log", 
+                        printgen=n_print_tree) )
+
+# Monitor trait evolution
+monitors.append( mnFile( tree, filename=outDirPath+outputPrefix+".PRIOR.tre", 
+                        printgen=n_print_tree) )
+
+monitors.append( mnCharacterHistorySummary( filename=outDirPath+outputPrefix+".history.PRIOR.txt",
+                                            ctmc=trait_evol,
+                                            tree=tree,
+                                            printgen=n_print_tree ) )
+
+monitors.append(mnCharHistoryNewick(ctmc=trait_evol,
+                                    tree=tree,
+                                    filename=outDirPath+outputPrefix+".history.PRIOR.nwck", 
+                                    printgen=n_print_tree ) )
+
+
+
+# Monitor tree with speciation completion branch rates
+monitors.append( mnExtNewick(
+                 filename=outDirPath+outputPrefix+".SpCompletionRates.PRIOR.trees",
+                 isNodeParameter=TRUE,
+                 printgen=n_print_tree,
+                 separator=TAB,
+                 tree=tree,
+                 state_branch_rate
+                 ))
+
+# Monitor tree with branch speciation events data
+monitors.append( mnExtNewick(
+                 filename=outDirPath+outputPrefix+".SpeciationEvents.PRIOR.trees",
+                 isNodeParameter=TRUE,
+                 printgen=n_print_tree,
+                 separator=TAB,
+                 tree=tree, 
+                 branch_speciation_events
+                 ) )
+
+# monitor speciation events
+monitors.append( mnFile(branch_speciation_events,
+                        filename=outDirPath+outputPrefix+".SpeciationEvents.PRIOR.log",
+                        printgen=n_print_log) )
+
+
+# The MCMC
+mymcmc_prior = mcmc(mymodel, monitors, moves)
+
+# run the MCMC analysis
+mymcmc_prior.run(n_gen, underPrior=TRUE)
+
+
+
+# Summarize tree with number of speciation events
+treeTrace2 = readTreeTrace(outDirPath+outputPrefix+".SpeciationEvents.PRIOR.trees",
+            burnin=burnin_percentage )
+mapTree(treeTrace2,
+        file=outDirPath+outputPrefix+".SpeciationEvents.MAP.PRIOR.tre",
+        mean=FALSE
+        )
+# The output needs some modification. We use a bash command to do it.
+system("sed -i 's/=1}/}/g' ../outputs/*.SpeciationEvents.MAP.PRIOR.tre")
+
+
+# Summarize tree with speciation completion rates
+treeTrace3 = readTreeTrace(outDirPath+outputPrefix+".SpCompletionRates.PRIOR.trees",
+            burnin=burnin_percentage )
+mapTree(treeTrace3,
+        file=outDirPath+outputPrefix+".SpCompletionRates.MAP.PRIOR.tre")
+

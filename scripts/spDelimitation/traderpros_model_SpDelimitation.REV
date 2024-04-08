@@ -1,0 +1,164 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script sets up the model. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+# Create helpers variables vor the moves and monitors.
+moves = VectorMoves()
+monitors = VectorMonitors()
+
+# Seed number
+if (seed_number!=0){
+  seed(seed_number)
+  }
+
+# Read the tree file
+tree <- readTrees(treePath)[1]
+
+# Get the number of nodes and branches
+n_nodes <- tree.nnodes()
+n_branches <- n_nodes -1
+
+# Read population to species map
+popMap = readDataDelimitedFile(popMapPath, header=TRUE)
+
+# Read trait data
+trait <- readDiscreteCharacterData(traitPath)
+
+# Get number of states
+n_states <- trait.getStateDescriptions().size()
+
+# Global trait transition
+global_trans_rate <- traRate
+
+# Relative Transition with reversible jumps
+relative_transition <- relativeTrans
+
+
+# Q matrix
+Q := fnFreeK(relative_transition, rescale=TRUE)
+
+# Root prior
+rf <- simplex(rep(1,n_states))
+
+# The Data Augmented PhyloCTMC
+trait_evol ~ dnPhyloCTMCDASiteIID(tree,
+                                  Q,
+                                  branchRates=global_trans_rate,
+                                  type="Standard",
+                                  nSites=1,
+                                  rootFrequencies=rf)
+
+trait_evol.clamp(trait)
+
+moves.append( mvCharacterHistory(ctmc=trait_evol, 
+                                 qmap_site=Q,
+                                 graph="node",
+                                 proposal="rejection",
+                                 weight=20) )
+moves.append( mvCharacterHistory(ctmc=trait_evol,
+                                 qmap_site=Q,
+                                 graph="branch",
+                                 proposal="rejection",
+                                 weight=20) )
+
+
+# Global Speciation completion rate
+SpeciationComplRate <- spCompRate
+
+# State specific speciation completion rate 
+stateSpecificRateWeights <- rateWeights
+
+stateSpecificRates := stateSpecificRateWeights * SpeciationComplRate
+
+# State specific branch rates
+for(i in 1:n_branches) {
+    state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
+}
+
+# The Trait Dependent Rates Protracted Speciation Tree
+TreeSpeciesTip <- tree
+for (i in 1:popMap.size()){
+    TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
+    }
+write(TreeSpeciesTip, filename=outDirPath+outputPrefix+".SpeciesName.tree" )
+
+# Stochastic speciation events on branches
+for (i in 1:(n_branches)){
+    branch_speciation_events[i] ~ dnPoisson(exp(state_branch_rate[i]*TreeSpeciesTip.branchLength(i)))
+}
+
+# Iterate to clamp observed non-speciatipn completion events
+iteration=1
+for (i in (tree.ntips()+1):n_nodes){
+    j=iteration++
+    # Visit every internal node i of the tree and get child branches indices and branch lengths
+    c1[j] = TreeSpeciesTip.child(i,1)
+    c2[j]  = TreeSpeciesTip.child(i,2)
+
+    # Get the descendants of each child to know if they connect same or different species
+    c1descendants[j] = TreeSpeciesTip.getDescendantTaxa(c1[j])
+    c2descendants[j] = TreeSpeciesTip.getDescendantTaxa(c2[j])
+
+    # Get a list of descendant species to know if node connects population of same or different species
+    c1splist[j] = [c1descendants[j][1].getName()]
+    if (c1descendants[j].size() > 1){
+        for (n in 2:c1descendants[j].size()){
+        c1splist[j].append([c1descendants[j][n].getName()])
+        }
+    }
+    c1splist[j].unique()
+
+    c2splist[j] = [c2descendants[j][1].getName()]
+    if (c2descendants[j].size() > 1){
+        for (n in 2:c2descendants[j].size()){
+        c2splist[j].append([c2descendants[j][n].getName()])
+        }
+    }
+    c2splist[j].unique()
+
+    # If node connects populations of same species, clamp the observed value to 0 to indicate that no speciation can be observed. It is only applicable if the species has known assignments. If node connects population of different species we assign moves to it so it can be sampled during MCMC.
+    if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE & c2splist[j].contains("unknown")==FALSE) & ( c1splist[j][1] == c2splist[j][1])) {
+        branch_speciation_events[c1[j]].clamp(0)
+        branch_speciation_events[c2[j]].clamp(0)
+    } else {
+        moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
+        moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
+    }
+}
+
+# The tree with speciation events as branch lengths
+topology <- readBranchLengthTrees(outDirPath+outputPrefix+".SpeciesName.tree")[1]
+SpeciationBranchTree := fnTreeAssembly(topology, branch_speciation_events)
+
+topologyPopNames <- readBranchLengthTrees(treePath)[1]
+SpeciationBranchTreePoNames := fnTreeAssembly(topologyPopNames, branch_speciation_events)
+
+# The likelihood function to constraint search to events compatible with the observed species limits
+
+print("Creating speciation distance matrix...")
+
+distanceMatrix := fnTreePairwiseDistances(SpeciationBranchTree)
+
+index=1
+maxSpeciationConnectingTwoTips = totalSpecies-1
+for (i in 1:distanceMatrix.size()){
+    for (j in 1:distanceMatrix.size()){
+      if ((distanceMatrix.names()[i] != distanceMatrix.names()[j]) & (distanceMatrix.names()[i]!= "unknown" & distanceMatrix.names()[j]!= "unknown")){
+        m=index++
+        constraintViolation[m] ~ dnUniformInteger(int(distanceMatrix.matrix()[i][j]- maxSpeciationConnectingTwoTips),
+                                                    int(distanceMatrix.matrix()[i][j]- 1))
+        constraintViolation[m].clamp(0) 
+      }
+    }
+}
+
+# Finalize the model
+
+mymodel = model(branch_speciation_events)

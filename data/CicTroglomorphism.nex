@@ -1,0 +1,148 @@
+#NEXUS
+[written Tue Apr 02 09:50:42 MDT 2024 by Mesquite  version 3.81 (build 955) at GuiPC/10.0.0.15]
+
+BEGIN TAXA;
+	TITLE Taxa;
+	DIMENSIONS NTAX=124;
+	TAXLABELS
+		'mirifica_WPecRi_AmaMaz' 'sp02_Kickap_Kahns' 'reclusa_BlaCyp_CMCave' 'brunsi_NorBex_AccSin' 'brunsi_NorBex_LosDog' 'baroniaCF_StoneO_GreeMt' 'baroniaCF_StoneO_TusHei' 'baronia_AlamoH_OblPit' 'baronia_AlamoH_Robber' 'neovespera_UTSA_CE2160' 'bullis_StoneO_281162' 'bullis_StoneO_HEB' 'bullis_StoneO_EagNes' 'bullis_StoneO_281167' 'bullis_StoneO_QuiCap' 'bullis_StoneO_GenCav' 'bullis_StoneO_BunHol' 'bullis_StoneO_RooCan' 'bullis_StoneO_UpCree' 'bullis_StoneO_ClasFea' 'bullis_StoneO_Hilger' 'bullis_StoneO_StrLit' 'vespera_CulAnt_SAWSPu' 'vespera_CulAnt_CarCre' 'vespera_CulAnt_151010' 'vespera_CulAnt_151018' 'vespera_CulAnt_151015' 'vespera_CulAnt_AMA006' 'vespera_CulAnt_AMA014' 'vespera_CulAnt_S29XXX' 'vespera_CulAnt_MaxRob' 'vespera_CulAnt_Feat99' 'vespera_CulAnt_NorPre' 'vespera_CulAnt_WisPro' 'vespera_CulAnt_KinToa' 'vespera_CulAnt_SteRan' 'vespera_CulAnt_BeaTre' 'vespera_CulAnt_ChiCri' 'vespera_CulAnt_WomPit' 'vespera_CulAnt_AMA002' 'vespera_CulAnt_AMA005' 'vespera_CulAnt_AMA009' 'vespera_CulAnt_SBCCav' 'selectaCF_Utopia_SplMtn' 'selectaCF_Utopia_FalAni' 'selectaCF_Utopia_MoonMt' 'sp01_Kickap_DeepCa' 'madlaCF_HillCo_BobCla' 'madlaCF_HillCo_FernCa' 'madla_GovCan_TightC' 'madla_UTSA_Huesta' 'madla_UTSA_Breath' 'madla_UTSA_Crownr' 'madla_GovCan_SurSink' 'madla_StoneO_HQCave' 'madla_StoneO_PlePit' 'madla_StoneO_LowPrior' 'madla_UTSA_160403' 'madla_GovCan_Hernan' 'madla_GovCan_HacSink' 'madla_GovCan_LosPot' 'madla_UTSA_LaCant' 'madla_GovCan_Dancing' 'madla_GovCan_BonPil' 'madla_UTSA_CraBat' 'madla_GovCan_Lithic' 'madla_GovCan_GCaBat' 'madla_GovCan_SotPit' 'madla_Helote_MadCav' 'madla_GovCan_SanAnt' 'madla_GovCan_Scenic' 'madla_CulAnt_151021' 'madla_UTSA_Scharf' 'madla_CulAnt_151019' 'madla_CulAnt_151015' 'madla_CulAnt_15114' 'buwata_CedarP_FK2XXX' 'buwata_CedarP_FK32XX' 'buwata_CedarP_LeoSink' 'buwata_PosOak_Collab' 'buwata_CedarP_AdoSpr' 'buwata_CedarP_Cortan' 'buwata_CedarP_LakCav' 'buwata_CedarP_RolRoc' 'buwata_McNeil_BecSew' 'buwata_McNeil_ColCav' 'travisae_Austin_NorRoo' 'travisae_Jollyv_NewCom' 'travisae_Austin_Cotter' 'travisae_Jollyv_Cortan' 'travisae_Jollyv_Cotter' 'travisae_Jollyv_JesEas' 'travisae_Jollyv_ToothC' 'travisae_Austin_PerPar' 'travisae_Jollyv_Pickle' 'travisae_Jollyv_PonPar' 'troglobia_SForHo_SevMil' 'vibora_Nwilli_SunCit' 'browniCF_Nwilli_HeaRob' 'browni_George_Browns' 'novsp_Bander_HamCav' 'bandida_HaysCo_HosHol' 'ubickiCF_HaysCo_WimBat' 'bandida_HaysCo_HayRan' 'bandida_STravC_BloSin' 'bandida_STravC_GrasCov' 'bandida_STravC_Millen' 'bandida_STravC_PenCav' 'bandida_STravC_Wyoaka' 'bandida_STravC_PipCav' 'bandida_STravC_Y2Cave' 'ubickiCF_HaysCo_BacYar' 'ubickiCF_HaysCo_McCart' 'platypus_StoneO_1604FZ' 'platypus_StoneO_281180' 'platypus_StoneO_Callie' 'platypusCF_StoneO_B52Cav' 'platypus_StoneO_PlaPit' 'platypus_StoneO_281168' 'platypus_StoneO_HanRoc' 'platypus_StoneO_JosWal' 'platypus_StoneO_RooTou' 'platypus_StoneO_281162' 'platypus_StoneO_MarPit' 
+	;
+
+END;
+
+
+BEGIN CHARACTERS;
+	TITLE  Character_Matrix;
+	DIMENSIONS  NCHAR=1;
+	FORMAT DATATYPE = STANDARD RESPECTCASE GAP = - MISSING = ? SYMBOLS = "  0 1";
+	CHARSTATELABELS 
+		1 Troglomorphism_Index /  'Low: smaller than 1.98' 'High: greater than 1.98' ; 
+	MATRIX
+	'mirifica_WPecRi_AmaMaz'  0
+	'sp02_Kickap_Kahns'       0 [inferred with BayesTraits]
+	'reclusa_BlaCyp_CMCave'   0
+	'brunsi_NorBex_AccSin'    0
+	'brunsi_NorBex_LosDog'    0
+	'baroniaCF_StoneO_GreeMt' 0
+	'baroniaCF_StoneO_TusHei' 0
+	'baronia_AlamoH_OblPit'   0
+	'baronia_AlamoH_Robber'   0
+	'neovespera_UTSA_CE2160'  0
+	'bullis_StoneO_281162'    0
+	'bullis_StoneO_HEB'       0
+	'bullis_StoneO_EagNes'    0
+	'bullis_StoneO_281167'    0
+	'bullis_StoneO_QuiCap'    0
+	'bullis_StoneO_GenCav'    0
+	'bullis_StoneO_BunHol'    0
+	'bullis_StoneO_RooCan'    0
+	'bullis_StoneO_UpCree'    0
+	'bullis_StoneO_ClasFea'   0
+	'bullis_StoneO_Hilger'    0
+	'bullis_StoneO_StrLit'    0
+	'vespera_CulAnt_SAWSPu'   0
+	'vespera_CulAnt_CarCre'   0
+	'vespera_CulAnt_151010'   0
+	'vespera_CulAnt_151018'   0
+	'vespera_CulAnt_151015'   0
+	'vespera_CulAnt_AMA006'   0
+	'vespera_CulAnt_AMA014'   0
+	'vespera_CulAnt_S29XXX'   0
+	'vespera_CulAnt_MaxRob'   0
+	'vespera_CulAnt_Feat99'   0
+	'vespera_CulAnt_NorPre'   0
+	'vespera_CulAnt_WisPro'   0
+	'vespera_CulAnt_KinToa'   0
+	'vespera_CulAnt_SteRan'   0
+	'vespera_CulAnt_BeaTre'   0
+	'vespera_CulAnt_ChiCri'   0
+	'vespera_CulAnt_WomPit'   0
+	'vespera_CulAnt_AMA002'   0
+	'vespera_CulAnt_AMA005'   0
+	'vespera_CulAnt_AMA009'   0
+	'vespera_CulAnt_SBCCav'   0
+	'selectaCF_Utopia_SplMtn' 0 [inferred with BayesTraits]
+	'selectaCF_Utopia_FalAni' 0 [inferred with BayesTraits]
+	'selectaCF_Utopia_MoonMt' 0
+	'sp01_Kickap_DeepCa'      0 [inferred with BayesTraits]
+	'madlaCF_HillCo_BobCla'   1
+	'madlaCF_HillCo_FernCa'   1
+	'madla_GovCan_TightC'     1
+	'madla_UTSA_Huesta'       1
+	'madla_UTSA_Breath'       1
+	'madla_UTSA_Crownr'       1
+	'madla_GovCan_SurSink'    1
+	'madla_StoneO_HQCave'     1
+	'madla_StoneO_PlePit'     1
+	'madla_StoneO_LowPrior'   1
+	'madla_UTSA_160403'       1
+	'madla_GovCan_Hernan'     1
+	'madla_GovCan_HacSink'    1
+	'madla_GovCan_LosPot'     1
+	'madla_UTSA_LaCant'       1
+	'madla_GovCan_Dancing'    1
+	'madla_GovCan_BonPil'     1
+	'madla_UTSA_CraBat'       1
+	'madla_GovCan_Lithic'     1
+	'madla_GovCan_GCaBat'     1
+	'madla_GovCan_SotPit'     1
+	'madla_Helote_MadCav'     1
+	'madla_GovCan_SanAnt'     1
+	'madla_GovCan_Scenic'     1
+	'madla_CulAnt_151021'     1
+	'madla_UTSA_Scharf'       1
+	'madla_CulAnt_151019'     1
+	'madla_CulAnt_151015'     1
+	'madla_CulAnt_15114'      1
+	'buwata_CedarP_FK2XXX'    0
+	'buwata_CedarP_FK32XX'    0
+	'buwata_CedarP_LeoSink'   0
+	'buwata_PosOak_Collab'    0
+	'buwata_CedarP_AdoSpr'    0
+	'buwata_CedarP_Cortan'    0
+	'buwata_CedarP_LakCav'    0
+	'buwata_CedarP_RolRoc'    0
+	'buwata_McNeil_BecSew'    0
+	'buwata_McNeil_ColCav'    0
+	'travisae_Austin_NorRoo'  0
+	'travisae_Jollyv_NewCom'  0
+	'travisae_Austin_Cotter'  0
+	'travisae_Jollyv_Cortan'  0
+	'travisae_Jollyv_Cotter'  0
+	'travisae_Jollyv_JesEas'  0
+	'travisae_Jollyv_ToothC'  0
+	'travisae_Austin_PerPar'  0
+	'travisae_Jollyv_Pickle'  0
+	'travisae_Jollyv_PonPar'  0
+	'troglobia_SForHo_SevMil' 0
+	'vibora_Nwilli_SunCit'    0
+	'browniCF_Nwilli_HeaRob'  0 [inferred with BayesTraits]
+	'browni_George_Browns'    0
+	'novsp_Bander_HamCav'     0 [inferred with BayesTraits]
+	'bandida_HaysCo_HosHol'   1
+	'ubickiCF_HaysCo_WimBat'  1
+	'bandida_HaysCo_HayRan'   1
+	'bandida_STravC_BloSin'   1
+	'bandida_STravC_GrasCov'  1
+	'bandida_STravC_Millen'   1
+	'bandida_STravC_PenCav'   1
+	'bandida_STravC_Wyoaka'   1
+	'bandida_STravC_PipCav'   1
+	'bandida_STravC_Y2Cave'   1
+	'ubickiCF_HaysCo_BacYar'  1 [inferred with BayesTraits]
+	'ubickiCF_HaysCo_McCart'  1 [inferred with BayesTraits]
+	'platypus_StoneO_1604FZ'  1
+	'platypus_StoneO_281180'  1
+	'platypus_StoneO_Callie'  1
+	'platypusCF_StoneO_B52Cav'1
+	'platypus_StoneO_PlaPit'  1
+	'platypus_StoneO_281168'  1
+	'platypus_StoneO_HanRoc'  1
+	'platypus_StoneO_JosWal'  1
+	'platypus_StoneO_RooTou'  1
+	'platypus_StoneO_281162'  1
+	'platypus_StoneO_MarPit'  1
+
+;
+
+END;
