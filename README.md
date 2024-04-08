@@ -448,8 +448,9 @@ ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.png"
 
 ```
 
-![Tree with speciation completion rates](./outfig/traderpros.SpCompRates.tree.png) 
+![Tree with speciation completion rates](./outfigs/traderpros.SpCompRates.tree.png) 
 
+```
 # Plot number of speciation events
 eventsTree = readTrees(eventsTreeFile)
 
