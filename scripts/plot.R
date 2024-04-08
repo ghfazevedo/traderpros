@@ -32,6 +32,8 @@ SpCompletionRate <- plotTree(tree = tree,
   ggplot2::theme(legend.position=c(.1, .9));SpCompletionRate
 
 ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.pdf", sep=""), width = 18, height = 24) 
+ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.png", sep=""), width = 18, height = 24) 
+
 
 # Plot number of speciation events
 eventsTree = readTrees(eventsTreeFile)
@@ -50,6 +52,7 @@ sp_eventsTree <- plotTree(tree=eventsTree,
   ggplot2::theme(legend.position=c(.1, .9));sp_eventsTree         
 
 ggsave(sp_eventsTree,file=paste(outFigsDir, "traderpros.SpEvents.tree.pdf", sep=""), width = 18, height = 24) 
+ggsave(sp_eventsTree,file=paste(outFigsDir, "traderpros.SpEvents.tree.png", sep=""), width = 18, height = 24) 
 
 
 # Plot Trace
@@ -60,13 +63,14 @@ plotSpCompl <- plotTrace(trace = traceModel,
                        vars = c("stateSpecificRates[1]","stateSpecificRates[2]"));plotSpCompl 
 
 ggsave(file=paste(outFigsDir, "traderpros.StateSpecificRates.posterior.pdf", sep="")) 
-
+ggsave(file=paste(outFigsDir, "traderpros.StateSpecificRates.posterior.png", sep=""))
 
 
 # Plot reversible jump hypotheses
 plotSPComplRJ <- plotTrace(trace = traceModel, 
                              vars = c("is_spCompletion_state_dependent"));plotSPComplRJ
 ggsave(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.posterior.pdf", sep="")) 
+ggsave(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.posterior.png", sep="")) 
 
 
 plotSPComplPost <- plotTrace(trace = traceModel, 
@@ -74,14 +78,7 @@ plotSPComplPost <- plotTrace(trace = traceModel,
 ggsave(file=paste(outFigsDir, "traderpros.SPCompletion.posterior.pdf", sep="")) 
 
 
-plotstateSpecificSPComplPost <- plotTrace(trace = traceModel, 
-                             vars = c("stateSpecificRateWeights[1]", "stateSpecificRateWeights[2]"));plotstateSpecificSPComplPost
-
-ggsave(file=paste(outFigsDir, "traderpros.stateSpecificSPCompl.posterior.pdf", sep="")) 
-
-
-traceModel[1]$stateSpecificRateWeights[1]
-
+# Plot troglomorphism Reversible jump probabilities
 plotTrogloRJ <- plotTrace(trace = traceModel, 
                            vars = c("is_troglo_reversible"));plotTrogloRJ
 ggsave(file=paste(outFigsDir, "traderpros.RJTroglRever.posterior.pdf", sep="")) 
