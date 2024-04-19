@@ -21,10 +21,15 @@ monitors.append( mnFile(SpeciationComplRate, stateSpecificRates,
                         printgen=n_print_log) )
 
 # monitor reversible jumps hypotheses
-monitors.append( mnFile(is_troglo_reversible, 
-                        is_spCompletion_state_dependent,
+monitors.append( mnFile(is_spCompletion_state_dependent,
                         filename=outDirPath+outputPrefix+".RJ.log",
                         printgen=n_print_log) )
+
+# The code below is to be used if the trait transition is being estimated and tested for reversibility with reversible jump
+#monitors.append( mnFile(is_troglo_reversible, 
+#                        is_spCompletion_state_dependent,
+#                        filename=outDirPath+outputPrefix+".RJ.log",
+#                        printgen=n_print_log) )
 
 # Monitor tree with speciation events and branch lengths
 monitors.append( mnFile(SpeciationBranchTreePoNames, 

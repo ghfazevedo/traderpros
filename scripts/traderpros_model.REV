@@ -34,18 +34,19 @@ trait <- readDiscreteCharacterData(traitPath)
 # Get number of states
 n_states <- trait.getStateDescriptions().size()
 
-# Global trait transition
-global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
-moves.append( mvScale( global_trans_rate, weight=1 ) )
-
-# Relative Transition with reversible jumps
-n_rates = n_states * (n_states-1)
-relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
-
-moves.append( mvRJSwitch(relative_transition , weight=1.0) )
-moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
-
-is_troglo_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
+## Global trait transition
+## We are commenting this out because we are using a fixed rate defined in the set up file
+#global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
+#moves.append( mvScale( global_trans_rate, weight=1 ) )
+#
+## Relative Transition with reversible jumps
+#n_rates = n_states * (n_states-1)
+#relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
+#
+#moves.append( mvRJSwitch(relative_transition , weight=1.0) )
+#moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
+#
+#is_troglo_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
 
 # Q matrix
 Q := fnFreeK(relative_transition, rescale=TRUE)
@@ -72,12 +73,12 @@ moves.append( mvCharacterHistory(ctmc=trait_evol,
                                  qmap_site=Q,
                                  graph="node",
                                  proposal="rejection",
-                                 weight=20) )
+                                 weight=round(n_nodes/2)) )
 moves.append( mvCharacterHistory(ctmc=trait_evol,
                                  qmap_site=Q,
                                  graph="branch",
                                  proposal="rejection",
-                                 weight=20) )
+                                 weight=round(n_branches/2)) )
 
 
 # Global Speciation completion rate
@@ -155,6 +156,51 @@ for (i in (tree.ntips()+1):n_nodes){
     }
 }
 
+# Reversible jump to track probability of speciation in target branches
+branch_speciation_events[115] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[115]*TreeSpeciesTip.branchLength(115))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[115], weight=1.0) )
+speciation_br115 := ifelse(branch_speciation_events[115] == 0, 0, 1)
+
+branch_speciation_events[116] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[116]*TreeSpeciesTip.branchLength(116))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[116], weight=1.0) )
+speciation_br116 := ifelse(branch_speciation_events[116] == 0, 0, 1)
+
+branch_speciation_events[117] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[117]*TreeSpeciesTip.branchLength(117))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[117], weight=1.0) )
+speciation_br117 := ifelse(branch_speciation_events[117] == 0, 0, 1)
+
+branch_speciation_events[118] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[118]*TreeSpeciesTip.branchLength(118))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[118], weight=1.0) )
+speciation_br118 := ifelse(branch_speciation_events[118] == 0, 0, 1)
+
+branch_speciation_events[119] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[119]*TreeSpeciesTip.branchLength(119))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[119], weight=1.0) )
+speciation_br119 := ifelse(branch_speciation_events[119] == 0, 0, 1)
+
+branch_speciation_events[127] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[127]*TreeSpeciesTip.branchLength(127))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[127], weight=1.0) )
+speciation_br127 := ifelse(branch_speciation_events[127] == 0, 0, 1)
+
+branch_speciation_events[128] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[128]*TreeSpeciesTip.branchLength(128))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[128], weight=1.0) )
+speciation_br128 := ifelse(branch_speciation_events[128] == 0, 0, 1)
+
+branch_speciation_events[129] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[129]*TreeSpeciesTip.branchLength(129))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[129], weight=1.0) )
+speciation_br129 := ifelse(branch_speciation_events[129] == 0, 0, 1)
+
+branch_speciation_events[140] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[140]*TreeSpeciesTip.branchLength(140))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[140], weight=1.0) )
+speciation_br140 := ifelse(branch_speciation_events[140] == 0, 0, 1)
+
+branch_speciation_events[141] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[141]*TreeSpeciesTip.branchLength(141))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[141], weight=1.0) )
+speciation_br141 := ifelse(branch_speciation_events[141] == 0, 0, 1)
+
+branch_speciation_events[142] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[142]*TreeSpeciesTip.branchLength(142))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[142], weight=1.0) )
+speciation_br142 := ifelse(branch_speciation_events[142] == 0, 0, 1)
+
 # The tree with speciation events as branch lengths
 topology <- readBranchLengthTrees(outDirPath+outputPrefix+".SpeciesName.tree")[1]
 SpeciationBranchTree := fnTreeAssembly(topology, branch_speciation_events)
@@ -181,6 +227,14 @@ for (i in 1:distanceMatrix.size()){
     }
 }
 
-# Finalize the model
+# Constraint for the minimum number of speciation in the whole tree
+min_n_species = 70
+max_n_species = 100
+n_speciation_events := sum(branch_speciation_events)
+deviation_of_expected_events ~ dnUniformInteger(n_speciation_events - (max_n_species-1),
+                                   n_speciation_events - (min_n_species-1)
+                                   )
+deviation_of_expected_events.clamp(0)
 
+# Finalize the model
 mymodel = model(branch_speciation_events)

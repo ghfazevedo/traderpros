@@ -61,25 +61,32 @@ n_states <- trait.getStateDescriptions().size()
 ```
   
 ### The transition matrix
-
-We first define the prior on the global trait transition rate. We will assume a exponential distribution with mean 0.1 (rate= 1/0.1= 10). 
+We first define the prior on the global trait transition rate. Although it is possible to independently infer the transition rates here with a less informative distribution, we will use a distribution based on the results of a previous analyses using HiSSE [here](). It has been shown before that transition rates might be wrongly inferred if it is influencing the tree shape in a state dependent birth and death model (REF). Ideally, we would use a birth and death tree process jointly with our protracted speciation to estimate rates in a trait dependent protracted speciation birth and death. However that could be time consuming, so we first jointly inferred the transition, extinction (death) and population formation (birth) in a HiSSE model, and use the posterior distribution to inform our transition rate here. The protracted speciation part of the model will be determined later here.
 
 ```R
-traRate_expoDistrib_parameter <- 10
-global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
-moves.append( mvScale( global_trans_rate, weight=1 ) )
+global_trans_rate <- 0.0269
+relative_transition <- simplex(1,0)
 ```
 
-We draw the relative transition rates from a flat Dirichlet distribution. We also create a reversible jump to test if troglomorphism is reversible
-```R
-n_rates = n_states * (n_states-1)
-relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
+>Use the code below instead if you want to estimate the transition rate using a exponential distribution
+>>```
+>>>traRate_expoDistrib_parameter <- 10
+>>>global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
+>>>moves.append( mvScale( global_trans_rate, weight=1 ) )
+>>```
+>  
+>Also, if you are estimating the rates you should draw the relative transition rates from a distribution, such as a flat Dirichlet distribution. We also can create a reversible jump to test if troglomorphism is reversible
+>>```R
+>>n_rates = n_states * (n_states-1)
+>>relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
+>>
+>>moves.append( mvRJSwitch(relative_transition , weight=1.0) )
+>>moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
+>>
+>>is_troglo_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
+>>```
 
-moves.append( mvRJSwitch(relative_transition , weight=1.0) )
-moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
 
-is_troglo_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
-```
 We can now create our transition rate matrix.
 ```R
 Q := fnFreeK(relative_transition, rescale=TRUE)
@@ -110,12 +117,12 @@ moves.append( mvCharacterHistory(ctmc=trait_evol,
                                  qmap_site=Q,
                                  graph="node",
                                  proposal="rejection",
-                                 weight=20) )
+                                 weight=round(n_nodes/2)) )
 moves.append( mvCharacterHistory(ctmc=trait_evol,
                                  qmap_site=Q,
                                  graph="branch",
                                  proposal="rejection",
-                                 weight=20) )
+                                 weight=round(n_branches/2)) )
 ```
 
 ### Speciation Completion Rates
@@ -168,7 +175,6 @@ for(i in 1:n_branches) {
 ```
 
 ## The Trait Dependent Rates Protracted Speciation Tree
-
 We first use our population map to replace the tip names for species names.
 ```R
 TreeSpeciesTip <- tree
@@ -232,6 +238,53 @@ for (i in (tree.ntips()+1):n_nodes){
 }
 ```
 
+We add a reversible jump to track the probability of having speciation events on branches of interest. You can check the branch index in the [tree with species names](outputs/traderpros.SpeciesName.tree)
+```R
+branch_speciation_events[115] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[115]*TreeSpeciesTip.branchLength(115))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[115], weight=1.0) )
+speciation_br115 := ifelse(branch_speciation_events[115] == 0, 0, 1)
+
+branch_speciation_events[116] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[116]*TreeSpeciesTip.branchLength(116))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[116], weight=1.0) )
+speciation_br116 := ifelse(branch_speciation_events[116] == 0, 0, 1)
+
+branch_speciation_events[117] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[117]*TreeSpeciesTip.branchLength(117))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[117], weight=1.0) )
+speciation_br117 := ifelse(branch_speciation_events[117] == 0, 0, 1)
+
+branch_speciation_events[118] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[118]*TreeSpeciesTip.branchLength(118))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[118], weight=1.0) )
+speciation_br118 := ifelse(branch_speciation_events[118] == 0, 0, 1)
+
+branch_speciation_events[119] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[119]*TreeSpeciesTip.branchLength(119))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[119], weight=1.0) )
+speciation_br119 := ifelse(branch_speciation_events[119] == 0, 0, 1)
+
+branch_speciation_events[127] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[127]*TreeSpeciesTip.branchLength(127))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[127], weight=1.0) )
+speciation_br127 := ifelse(branch_speciation_events[127] == 0, 0, 1)
+
+branch_speciation_events[128] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[128]*TreeSpeciesTip.branchLength(128))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[128], weight=1.0) )
+speciation_br128 := ifelse(branch_speciation_events[128] == 0, 0, 1)
+
+branch_speciation_events[129] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[129]*TreeSpeciesTip.branchLength(129))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[129], weight=1.0) )
+speciation_br129 := ifelse(branch_speciation_events[129] == 0, 0, 1)
+
+branch_speciation_events[140] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[140]*TreeSpeciesTip.branchLength(140))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[140], weight=1.0) )
+speciation_br140 := ifelse(branch_speciation_events[140] == 0, 0, 1)
+
+branch_speciation_events[141] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[141]*TreeSpeciesTip.branchLength(141))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[141], weight=1.0) )
+speciation_br141 := ifelse(branch_speciation_events[141] == 0, 0, 1)
+
+branch_speciation_events[142] ~ dnReversibleJumpMixture( 0, dnPoisson(exp(state_branch_rate[142]*TreeSpeciesTip.branchLength(142))), p=0.5 )
+moves.append( mvRJSwitch(branch_speciation_events[142], weight=1.0) )
+speciation_br142 := ifelse(branch_speciation_events[142] == 0, 0, 1)
+```
+
 Now we create the likelihood of observing constrained speciation events. As we mentioned before, at least one speciation event must have occurred in the tree path connecting two species.
   
 We create a new tree to modify the branch lengths according to the number of speciation events
@@ -264,6 +317,17 @@ for (i in 1:distanceMatrix.size()){
 }
 ```
 
+We can also stablish a constrain for the minimum number of speciation events in the whole tree. This should be at least the minimum number of known species minus 1. The maximum number can be an estimative of how many species there are in the group. There are 76 known species of *Cicurina* (*Cicurela*) (Hedin 2015, 2018; Paquin and Duperree 2009; WSC 2024) if we consider 75% of the species are known, then the upper interval could be 100 species. We will allow the number of species to be a little smaller than the know number of species(76), so we con account for possible synonyms in the list of know species names. The minimum number will be determined by the e Using the same approach as done above, we can create the a priori probability of he number of speciation events being zero if smaller than the minimum number of species.
+
+```R
+min_n_species = 70
+max_n_species = 100
+n_speciation_events := sum(branch_speciation_events)
+deviation_of_expected_events ~ dnUniformInteger(n_speciation_events - (max_n_species-1),
+                                   n_speciation_events - (min_n_species-1)
+                                   )
+deviation_of_expected_events.clamp(0)
+```
 
 We can now finalize our model 
 ```R
@@ -368,7 +432,6 @@ mymcmc.run(n_gen, checkpointFile=outDirPath+outputPrefix+".checkpoint",
 ```
 
 ## Process results
-
 We can now summarize the results
 
 ```R
