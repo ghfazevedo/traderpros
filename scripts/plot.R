@@ -3,7 +3,7 @@ library(RevGadgets)
 library(coda)
 library(RColorBrewer)
 library(viridis)
-library("lessR")
+#library(lessR)
 
 # output and input directories
 outFigsDir = "../outfigs/"
@@ -382,9 +382,5 @@ dev.off()
 pdf(file=paste(outFigsDir, "traderpros.spEventProbBr142.pdf"))
 pie(spEventProbBr142_table$Probability, labels = paste(spEventProbBr142_table$State, " ", round(spEventProbBr142_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
 dev.off()
-
-
-
-
 
 
