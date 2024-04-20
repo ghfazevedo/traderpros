@@ -384,3 +384,20 @@ pie(spEventProbBr142_table$Probability, labels = paste(spEventProbBr142_table$St
 dev.off()
 
 
+######################################
+# Species delimitation probabilities #
+######################################
+
+# Probability one single species: no speciation in any of the branches
+P_H1 <- spEventProbBr115_table$Probability[1] * 
+        spEventProbBr116_table$Probability[1] *
+        spEventProbBr117_table$Probability[1] *
+        spEventProbBr118_table$Probability[1] *
+        spEventProbBr119_table$Probability[1] *
+        spEventProbBr127_table$Probability[1] *
+        spEventProbBr128_table$Probability[1] *
+        spEventProbBr129_table$Probability[1] *
+        spEventProbBr140_table$Probability[1] *
+        spEventProbBr141_table$Probability[1] *
+        spEventProbBr141_table$Probability[1] 
+

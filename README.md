@@ -46,6 +46,9 @@ We first read the tree, the population to species map, the trait data and get so
 # Read the tree file
 tree <- readTrees(treePath)[1]
 
+# Save tree with branch indexes
+writeNexus(tree, filename=outDirPath+outputPrefix+"_indexed.tree.nex")
+
 # Get the number of nodes and branches
 n_nodes <- tree.nnodes()
 n_branches <- n_nodes -1
