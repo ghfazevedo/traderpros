@@ -389,7 +389,7 @@ dev.off()
 ######################################
 
 # Probability one single species: no speciation in any of the branches
-P_H1 <- spEventProbBr115_table$Probability[1] * 
+P_H1 = (spEventProbBr115_table$Probability[1] * 
         spEventProbBr116_table$Probability[1] *
         spEventProbBr117_table$Probability[1] *
         spEventProbBr118_table$Probability[1] *
@@ -399,5 +399,129 @@ P_H1 <- spEventProbBr115_table$Probability[1] *
         spEventProbBr129_table$Probability[1] *
         spEventProbBr140_table$Probability[1] *
         spEventProbBr141_table$Probability[1] *
-        spEventProbBr141_table$Probability[1] 
+        spEventProbBr142_table$Probability[1])
 
+P_H2 =   (spEventProbBr115_table$Probability[1] * 
+          spEventProbBr116_table$Probability[1] *
+          spEventProbBr117_table$Probability[1] *
+          spEventProbBr118_table$Probability[1] *
+          spEventProbBr119_table$Probability[1] *
+          spEventProbBr127_table$Probability[1] *
+          spEventProbBr128_table$Probability[1] *
+          spEventProbBr129_table$Probability[2] *
+          spEventProbBr140_table$Probability[1] *
+          spEventProbBr141_table$Probability[1]) +
+         (spEventProbBr115_table$Probability[1] * 
+          spEventProbBr116_table$Probability[1] *
+          spEventProbBr117_table$Probability[1] *
+          spEventProbBr118_table$Probability[1] *
+          spEventProbBr119_table$Probability[1] *
+          spEventProbBr127_table$Probability[1] *
+          spEventProbBr128_table$Probability[1] *
+          spEventProbBr129_table$Probability[1] *
+          spEventProbBr140_table$Probability[1] *
+          spEventProbBr141_table$Probability[2] )+
+         (spEventProbBr115_table$Probability[1] * 
+          spEventProbBr116_table$Probability[1] *
+          spEventProbBr117_table$Probability[1] *
+          spEventProbBr118_table$Probability[1] *
+          spEventProbBr119_table$Probability[1] *
+          spEventProbBr127_table$Probability[1] *
+          spEventProbBr128_table$Probability[1] *
+          spEventProbBr129_table$Probability[2] *
+          spEventProbBr140_table$Probability[1] *
+          spEventProbBr141_table$Probability[2] )
+
+
+P_H3 =   (spEventProbBr115_table$Probability[1] * 
+          spEventProbBr116_table$Probability[1] *
+          spEventProbBr117_table$Probability[1] *
+          spEventProbBr118_table$Probability[1] *
+          spEventProbBr119_table$Probability[1] *
+          spEventProbBr127_table$Probability[2] *
+          spEventProbBr128_table$Probability[1] *
+          spEventProbBr129_table$Probability[2] *
+          spEventProbBr140_table$Probability[1] *
+          spEventProbBr141_table$Probability[1]) +
+         (spEventProbBr115_table$Probability[1] * 
+          spEventProbBr116_table$Probability[1] *
+          spEventProbBr117_table$Probability[1] *
+          spEventProbBr118_table$Probability[1] *
+          spEventProbBr119_table$Probability[1] *
+          spEventProbBr127_table$Probability[1] *
+          spEventProbBr128_table$Probability[2] *
+          spEventProbBr129_table$Probability[2] *
+          spEventProbBr140_table$Probability[1] *
+          spEventProbBr141_table$Probability[1] )+
+         (spEventProbBr115_table$Probability[1] * 
+          spEventProbBr116_table$Probability[1] *
+          spEventProbBr117_table$Probability[1] *
+          spEventProbBr118_table$Probability[1] *
+          spEventProbBr119_table$Probability[1] *
+          spEventProbBr127_table$Probability[2] *
+          spEventProbBr128_table$Probability[2] *
+          spEventProbBr129_table$Probability[2] *
+          spEventProbBr140_table$Probability[1] *
+          spEventProbBr141_table$Probability[2] )
+
+
+P_H4 =   (spEventProbBr115_table$Probability[2] * 
+            spEventProbBr116_table$Probability[1] *
+            spEventProbBr117_table$Probability[1] *
+            spEventProbBr118_table$Probability[1] *
+            spEventProbBr119_table$Probability[1] *
+            spEventProbBr127_table$Probability[1] *
+            spEventProbBr128_table$Probability[1] *
+            spEventProbBr129_table$Probability[2] *
+            spEventProbBr140_table$Probability[1] *
+            spEventProbBr141_table$Probability[1]) +
+  (spEventProbBr115_table$Probability[2] * 
+     spEventProbBr116_table$Probability[1] *
+     spEventProbBr117_table$Probability[1] *
+     spEventProbBr118_table$Probability[1] *
+     spEventProbBr119_table$Probability[1] *
+     spEventProbBr127_table$Probability[1] *
+     spEventProbBr128_table$Probability[1] *
+     spEventProbBr129_table$Probability[1] *
+     spEventProbBr140_table$Probability[1] *
+     spEventProbBr141_table$Probability[2] )+
+  (spEventProbBr115_table$Probability[2] * 
+     spEventProbBr116_table$Probability[1] *
+     spEventProbBr117_table$Probability[1] *
+     spEventProbBr118_table$Probability[1] *
+     spEventProbBr119_table$Probability[1] *
+     spEventProbBr127_table$Probability[1] *
+     spEventProbBr128_table$Probability[1] *
+     spEventProbBr129_table$Probability[2] *
+     spEventProbBr140_table$Probability[1] *
+     spEventProbBr141_table$Probability[2] ) +
+  (spEventProbBr115_table$Probability[1] * 
+              spEventProbBr116_table$Probability[1] *
+              spEventProbBr117_table$Probability[1] *
+              spEventProbBr118_table$Probability[1] *
+              spEventProbBr119_table$Probability[1] *
+              spEventProbBr127_table$Probability[1] *
+              spEventProbBr128_table$Probability[1] *
+              spEventProbBr129_table$Probability[2] *
+              spEventProbBr140_table$Probability[2] *
+              spEventProbBr141_table$Probability[1]) +
+  (spEventProbBr115_table$Probability[2] * 
+     spEventProbBr116_table$Probability[1] *
+     spEventProbBr117_table$Probability[1] *
+     spEventProbBr118_table$Probability[1] *
+     spEventProbBr119_table$Probability[1] *
+     spEventProbBr127_table$Probability[1] *
+     spEventProbBr128_table$Probability[1] *
+     spEventProbBr129_table$Probability[1] *
+     spEventProbBr140_table$Probability[2] *
+     spEventProbBr141_table$Probability[2] )+
+  (spEventProbBr115_table$Probability[2] * 
+     spEventProbBr116_table$Probability[1] *
+     spEventProbBr117_table$Probability[1] *
+     spEventProbBr118_table$Probability[1] *
+     spEventProbBr119_table$Probability[1] *
+     spEventProbBr127_table$Probability[1] *
+     spEventProbBr128_table$Probability[1] *
+     spEventProbBr129_table$Probability[2] *
+     spEventProbBr140_table$Probability[2] *
+     spEventProbBr141_table$Probability[2] )

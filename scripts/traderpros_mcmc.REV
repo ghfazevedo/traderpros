@@ -31,6 +31,17 @@ mapTree(treeTrace,
         sampledAncestors=FALSE,
         positiveBranchLengths=FALSE)
 
+treeTraceBinary = readTreeTrace(outDirPath+outputPrefix+".EventsTreeBinary.log",
+            burnin=burnin_percentage )
+mapTree(treeTraceBinary,
+        file=outDirPath+outputPrefix+".EventsTreeBinary.MAP.tre",
+        ccAges=TRUE,
+        ccp=TRUE,
+        conditionalAges=TRUE,
+        mean=FALSE,
+        sampledAncestors=FALSE,
+        positiveBranchLengths=FALSE)
+
 # Summarize tree with number of speciation events
 treeTrace2 = readTreeTrace(outDirPath+outputPrefix+".SpeciationEvents.trees",
             burnin=burnin_percentage )

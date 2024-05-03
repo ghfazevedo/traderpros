@@ -2,7 +2,8 @@
 #
 # Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
 #
-# This script contains the options to set up the variables for the analyses. 
+# This script contains the options to set up the variables for the 
+# species delimitation analyses. 
 # 
 # authors: Guilherme Azevedo
 # Please see and cite Azevedo et al. 2024
@@ -13,12 +14,23 @@
 # Seed number to replicate. If you want a random seed set seed_number=0
 seed_number=0
 
+# Set the directories and base names for outputs and inputs
+workDirPath = "../../"
+dataDirPath = workDirPath + "data/"
+outDirPath = workDirPath + "outputsSpDelimitation/"
+outputPrefix = "traderpros_H9"
+popMapPath = dataDirPath + "popmapsHyp/popmapH9.tsv"
+treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
+traitPath = dataDirPath + "CicTroglomorphism.nex"
 
-# Set the global trait tansition rate
-traRate <- 0.0209
+# Set the fixed global and relativ trait satate transition
+global_trans_rate <-0.0331 # mean
+#global_trans_rate <- 0.0269 # median
+relative_transition <- v(0.8128, 0.1872) # mean
+#relative_transition <- simplex(1,0) # median
 
-# Set the relative transition rates
-relativeTrans <- simplex(0.5482, 0.4518)
+# Or alternatively Set the rate of the exponential distribution parameter for the global trait tansition rate prior
+#traRate_expoDistrib_parameter <- 10
 
 # Indicate the total number of populations (sampled and unsampled)
 n_pops <- 457
@@ -27,10 +39,15 @@ n_pops <- 457
 totalSpecies <- 76
 
 # Set the speciation completion rate
-spCompRate <- 0.1229
+SpeciationComplRate <- 0.217
 
-#Set the State specific speciation completion rate weights
-rateWeights <- simplex(0.4761, 0.5239 )
+# State specific speciation completion rate 
+stateSpecificRateWeights <- simplex(0.624, 0.376)
+
+# Set the minimum maximum expected number of species in the clade
+min_n_species = 70
+max_n_species = 100
+
 
 ## Power Posteriors and Likelihood options
 
@@ -53,3 +70,7 @@ n_print_log = 100
 
 # Print tree to file every x generations
 n_print_tree=100
+
+
+# read the model and run
+source("traderpros_spDelimitation.REV")

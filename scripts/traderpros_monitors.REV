@@ -32,9 +32,14 @@ monitors.append( mnFile(is_spCompletion_state_dependent,
 #                        printgen=n_print_log) )
 
 # Monitor tree with speciation events and branch lengths
-monitors.append( mnFile(SpeciationBranchTreePoNames, 
+monitors.append( mnFile(SpeciationBranchTreePopNames, 
                         filename=outDirPath+outputPrefix+".EventsTree.log", 
                         printgen=n_print_tree) )
+
+monitors.append( mnFile(SpeciationBranchTreeBinary, 
+                        filename=outDirPath+outputPrefix+".EventsTreeBinary.log", 
+                        printgen=n_print_tree) )
+
 
 # Monitor trait evolution
 monitors.append( mnFile( tree, filename=outDirPath+outputPrefix+".tre", 

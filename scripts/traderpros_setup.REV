@@ -28,21 +28,21 @@ global_trans_rate <-0.0331 # mean
 relative_transition <- v(0.8128, 0.1872) # mean
 #relative_transition <- simplex(1,0) # median
 
-# Or alternatively Set the rate of the exponential distribution parameter for the global trait tansition rate prior
+# Or alternatively Set the rate of the exponential distribution parameter for the global trait transition rate prior
 #traRate_expoDistrib_parameter <- 10
 
 # Indicate the total number of populations (sampled and unsampled)
-n_pops <- 457
+#n_pops <- 457
 
-# Indicate the total number of known species in the clade for the mode of the speciation completion rate prior
-totalSpecies <- 76
+# Set the rate for the exponential distribution prior for the speciation completion rate
+spcompletion_expoDistParam <- 1
 
-# Set the standard deviation of the lognormal distribution prior for the speciation completion rate
-lognormal_sd <- 1
+# Set the maximum number of speciation events between two tips
+maxSpeciationEventsBetween2Tips <- 50
 
 # Set the minimum maximum expected number of species in the clade
-min_n_species = 70
-max_n_species = 100
+#min_n_species = 70
+#max_n_species = 100
 
 ### The MCMC settings
 # Number of generations
