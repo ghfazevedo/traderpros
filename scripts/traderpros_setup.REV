@@ -31,18 +31,8 @@ relative_transition <- v(0.8128, 0.1872) # mean
 # Or alternatively Set the rate of the exponential distribution parameter for the global trait transition rate prior
 #traRate_expoDistrib_parameter <- 10
 
-# Indicate the total number of populations (sampled and unsampled)
-#n_pops <- 457
-
 # Set the rate for the exponential distribution prior for the speciation completion rate
 spcompletion_expoDistParam <- 1
-
-# Set the maximum number of speciation events between two tips
-maxSpeciationEventsBetween2Tips <- 50
-
-# Set the minimum maximum expected number of species in the clade
-#min_n_species = 70
-#max_n_species = 100
 
 ### The MCMC settings
 # Number of generations

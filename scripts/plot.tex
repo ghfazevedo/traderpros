@@ -1,0 +1,1216 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={plot.R},
+  pdfauthor={ghfa},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{plot.R}
+\author{ghfa}
+\date{2024-05-08}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\FunctionTok{library}\NormalTok{(RevGadgets)}
+\FunctionTok{library}\NormalTok{(coda)}
+\FunctionTok{library}\NormalTok{(RColorBrewer)}
+\FunctionTok{library}\NormalTok{(viridis)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: viridisLite
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#library(lessR)}
+
+\CommentTok{\# output and input directories}
+\NormalTok{outFigsDir }\OtherTok{=} \StringTok{"../outfigs/"}
+\NormalTok{inputFilesDir }\OtherTok{=} \StringTok{"../outputs/"}
+
+\FunctionTok{ifelse}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{dir.exists}\NormalTok{(}\FunctionTok{file.path}\NormalTok{(outFigsDir)), }\FunctionTok{dir.create}\NormalTok{(}\FunctionTok{file.path}\NormalTok{(outFigsDir)), }\StringTok{"Output directory exists.Rename it or make sure files within will have diferent names"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Output directory exists.Rename it or make sure files within will have diferent names"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# files}
+\NormalTok{treeFile }\OtherTok{=} \FunctionTok{paste}\NormalTok{(inputFilesDir,}\StringTok{"traderpros.SpCompletionRates.MAP.tre"}\NormalTok{, }\AttributeTok{sep =} \StringTok{""}\NormalTok{)}
+\NormalTok{eventsTreeFile }\OtherTok{=} \FunctionTok{paste}\NormalTok{(inputFilesDir, }\StringTok{"traderpros.SpeciationEvents.MAP.tre"}\NormalTok{, }\AttributeTok{sep =} \StringTok{""}\NormalTok{)}
+\NormalTok{traceFile }\OtherTok{=} \FunctionTok{paste}\NormalTok{(inputFilesDir,  }\StringTok{"traderpros.model.log"}\NormalTok{, }\AttributeTok{sep =} \StringTok{""}\NormalTok{)}
+\NormalTok{ratesTraceFile }\OtherTok{=} \FunctionTok{paste}\NormalTok{(inputFilesDir,  }\StringTok{"traderpros.Rates.log"}\NormalTok{, }\AttributeTok{sep =} \StringTok{""}\NormalTok{)}
+
+\CommentTok{\# burnin percentege}
+\NormalTok{burn }\OtherTok{=} \FloatTok{0.10}
+
+\CommentTok{\# Plot tree with rates}
+\NormalTok{tree }\OtherTok{=} \FunctionTok{readTrees}\NormalTok{(treeFile)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   |                                                |                                        |   0%  |                                                |========================================| 100%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pal\_name }\OtherTok{\textless{}{-}} \StringTok{"RdYlBu"}
+\NormalTok{ratecolors }\OtherTok{\textless{}{-}} \FunctionTok{brewer.pal}\NormalTok{(}\AttributeTok{n =} \DecValTok{11}\NormalTok{, }\AttributeTok{name =}\NormalTok{ pal\_name)}
+
+\NormalTok{SpCompletionRate }\OtherTok{\textless{}{-}} \FunctionTok{plotTree}\NormalTok{(}\AttributeTok{tree =}\NormalTok{ tree, }
+                   \AttributeTok{node\_age\_bars =} \ConstantTok{FALSE}\NormalTok{,}
+                   \AttributeTok{node\_pp =} \ConstantTok{FALSE}\NormalTok{, }
+                   \AttributeTok{tip\_labels =} \ConstantTok{TRUE}\NormalTok{,}
+                   \AttributeTok{tip\_labels\_size =} \DecValTok{3}\NormalTok{,}
+                   \AttributeTok{color\_branch\_by =} \StringTok{"state\_branch\_rate"}\NormalTok{,}
+                   \AttributeTok{branch\_color=}\FunctionTok{c}\NormalTok{(ratecolors[}\DecValTok{11}\NormalTok{], ratecolors[}\DecValTok{2}\NormalTok{]),}
+                   \AttributeTok{line\_width =} \FloatTok{0.8}\NormalTok{) }\SpecialCharTok{+} 
+\NormalTok{  ggplot2}\SpecialCharTok{::}\FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position=}\FunctionTok{c}\NormalTok{(.}\DecValTok{1}\NormalTok{, .}\DecValTok{9}\NormalTok{));SpCompletionRate}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(SpCompletionRate,}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.SpCompRates.tree.pdf"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{), }\AttributeTok{width =} \DecValTok{18}\NormalTok{, }\AttributeTok{height =} \DecValTok{24}\NormalTok{) }
+\FunctionTok{ggsave}\NormalTok{(SpCompletionRate,}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.SpCompRates.tree.png"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{), }\AttributeTok{width =} \DecValTok{18}\NormalTok{, }\AttributeTok{height =} \DecValTok{24}\NormalTok{) }
+
+
+\CommentTok{\# Plot number of speciation events}
+\NormalTok{eventsTree }\OtherTok{=} \FunctionTok{readTrees}\NormalTok{(eventsTreeFile)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   |                                                |                                        |   0%  |                                                |========================================| 100%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pal\_name }\OtherTok{\textless{}{-}} \StringTok{"RdYlBu"}
+\NormalTok{colors }\OtherTok{\textless{}{-}} \FunctionTok{brewer.pal}\NormalTok{(}\AttributeTok{n =} \DecValTok{11}\NormalTok{, }\AttributeTok{name =}\NormalTok{ pal\_name)}
+
+\NormalTok{sp\_eventsTree }\OtherTok{\textless{}{-}} \FunctionTok{plotTree}\NormalTok{(}\AttributeTok{tree=}\NormalTok{eventsTree,}
+         \AttributeTok{node\_age\_bars =} \ConstantTok{FALSE}\NormalTok{,}
+         \AttributeTok{node\_pp =} \ConstantTok{FALSE}\NormalTok{,}
+         \AttributeTok{tip\_labels =} \ConstantTok{TRUE}\NormalTok{,}
+         \AttributeTok{tip\_labels\_size =} \DecValTok{3}\NormalTok{,}
+         \AttributeTok{color\_branch\_by =} \StringTok{"branch\_speciation\_events"}\NormalTok{,}
+         \AttributeTok{branch\_color=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{9}\NormalTok{], colors[}\DecValTok{1}\NormalTok{]),}
+         \AttributeTok{line\_width =} \FloatTok{0.8}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  ggplot2}\SpecialCharTok{::}\FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position=}\FunctionTok{c}\NormalTok{(.}\DecValTok{1}\NormalTok{, .}\DecValTok{9}\NormalTok{));sp\_eventsTree         }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(sp\_eventsTree,}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.SpEvents.tree.pdf"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{), }\AttributeTok{width =} \DecValTok{18}\NormalTok{, }\AttributeTok{height =} \DecValTok{24}\NormalTok{) }
+\FunctionTok{ggsave}\NormalTok{(sp\_eventsTree,}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.SpEvents.tree.png"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{), }\AttributeTok{width =} \DecValTok{18}\NormalTok{, }\AttributeTok{height =} \DecValTok{24}\NormalTok{) }
+
+
+\CommentTok{\# Plot Trace}
+\NormalTok{traceModel }\OtherTok{\textless{}{-}} \FunctionTok{readTrace}\NormalTok{(traceFile)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Reading in log file 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{traceRate }\OtherTok{\textless{}{-}} \FunctionTok{readTrace}\NormalTok{(ratesTraceFile)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Reading in log file 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{trace\_quant\_MCMC }\OtherTok{\textless{}{-}} \FunctionTok{as.mcmc}\NormalTok{(traceRate[[}\DecValTok{1}\NormalTok{]])}
+\NormalTok{ESS}\OtherTok{\textless{}{-}}\FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{effectiveSize}\NormalTok{(trace\_quant\_MCMC))}
+\FunctionTok{traceplot}\NormalTok{(trace\_quant\_MCMC)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-3.pdf}
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-4.pdf}
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-5.pdf}
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-6.pdf}
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-7.pdf}
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-8.pdf}
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-9.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{RatesSummary}\OtherTok{\textless{}{-}}\FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{summarizeTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceRate, }
+                                           \AttributeTok{vars =}  \FunctionTok{c}\NormalTok{(}\StringTok{"stateSpecificRates[1]"}\NormalTok{,}
+                                                     \StringTok{"stateSpecificRates[2]"}\NormalTok{,}
+                                                     \StringTok{"SpeciationComplRate"}\NormalTok{)))}
+\NormalTok{RatesSummary}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                 trace_1 trace_1.1 trace_1.2
+## mean          0.3832186 0.3278642 0.7110828
+## median        0.3726895 0.3274800 0.6993505
+## MAP           0.3581582 0.3196768 0.6413715
+## quantile_2.5  0.2263917 0.1302088 0.4420595
+## quantile_97.5 0.5980421 0.5384850 1.0561628
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{plotSpCompl }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                       \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"stateSpecificRates[1]"}\NormalTok{,}\StringTok{"stateSpecificRates[2]"}\NormalTok{,}\StringTok{"SpeciationComplRate"}\NormalTok{)) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Using  as id variables
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{plotSpCompl}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-10.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.StateSpecificRates.posterior.pdf"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{)) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.StateSpecificRates.posterior.png"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot reversible jump hypotheses}
+\NormalTok{plotSPComplRJ }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                             \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"is\_spCompletion\_state\_dependent"}\NormalTok{));plotSPComplRJ}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-11.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.RJSPSompStateDep.posterior.pdf"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{)) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.RJSPSompStateDep.posterior.png"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{)) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{StateDependentProbability }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(plotSPComplRJ[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{StateDependentProbability}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{State, StateDependentProbability}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"Independent"}\NormalTok{)}
+\NormalTok{StateDependentProbability}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{State, StateDependentProbability}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Dependent"}\NormalTok{)}
+
+
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.RJSPSompStateDep.probability.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.RJSPSompStateDep.probability.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(StateDependentProbability}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot speciation events for target branches}
+\NormalTok{spEventPosteriorBr115 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[115]"}\NormalTok{));spEventPosteriorBr115}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-12.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr116 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[116]"}\NormalTok{));spEventPosteriorBr116}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-13.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr117 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[117]"}\NormalTok{));spEventPosteriorBr117}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-14.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr118 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[118]"}\NormalTok{));spEventPosteriorBr118}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-15.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr119 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[119]"}\NormalTok{));spEventPosteriorBr119}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-16.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr127 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[127]"}\NormalTok{));spEventPosteriorBr127}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-17.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr128 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[128]"}\NormalTok{));spEventPosteriorBr128}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-18.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr129 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[129]"}\NormalTok{));spEventPosteriorBr129}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-19.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr141 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[141]"}\NormalTok{));spEventPosteriorBr141}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-20.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr140 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[140]"}\NormalTok{));spEventPosteriorBr140}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-21.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spEventPosteriorBr142 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"branch\_speciation\_events[142]"}\NormalTok{));spEventPosteriorBr140}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-22.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot the probability of no speciation vs speciation (rjMCMC results)}
+
+\CommentTok{\# Branch 115}
+\NormalTok{spEventProbBr115 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br115"}\NormalTok{));spEventProbBr115}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-23.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr115.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr115.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr115\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr115[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 115"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-24.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr115.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr115.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 116}
+\NormalTok{spEventProbBr116 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br116"}\NormalTok{));spEventProbBr116}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-25.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr116.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr116.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr116\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr116[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 116"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-26.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr116.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr116.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 117}
+\NormalTok{spEventProbBr117 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br117"}\NormalTok{));spEventProbBr117}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-27.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr117.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr117.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr117\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr117[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 117"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-28.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr117.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr117.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 118}
+\NormalTok{spEventProbBr118 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br118"}\NormalTok{));spEventProbBr118}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-29.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr118.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr118.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr118\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr118[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 118"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-30.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr118.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr118.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 119}
+\NormalTok{spEventProbBr119 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br119"}\NormalTok{));spEventProbBr119}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-31.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr119.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr119.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr119\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr119[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 119"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-32.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr119.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr119.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 127}
+\NormalTok{spEventProbBr127 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br127"}\NormalTok{));spEventProbBr127}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-33.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr127.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr127.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr127\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr127[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 127"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-34.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr127.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr127.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 128}
+\NormalTok{spEventProbBr128 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br128"}\NormalTok{));spEventProbBr128}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-35.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr128.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr128.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr128\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr128[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 128"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-36.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr128.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr128.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 129}
+\NormalTok{spEventProbBr129 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br129"}\NormalTok{));spEventProbBr129}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-37.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr129.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr129.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr129\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr129[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 129"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-38.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr129.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr129.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr129\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 140}
+\NormalTok{spEventProbBr140 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br140"}\NormalTok{));spEventProbBr140}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-39.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr140.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr140.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr140\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr140[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 140"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-40.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr140.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr140.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 141}
+\NormalTok{spEventProbBr141 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br141"}\NormalTok{));spEventProbBr141}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-41.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr141.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr141.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr141\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr141[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 141"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-42.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr141.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr141.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr141\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Branch 142}
+\NormalTok{spEventProbBr142 }\OtherTok{\textless{}{-}} \FunctionTok{plotTrace}\NormalTok{(}\AttributeTok{trace =}\NormalTok{ traceModel, }
+                              \AttributeTok{vars =} \FunctionTok{c}\NormalTok{(}\StringTok{"speciation\_br142"}\NormalTok{));spEventProbBr142}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [[1]]
+\end{verbatim}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-43.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr142.posterior.pdf", sep="")) }
+\CommentTok{\#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr142.posterior.png", sep=""))}
+
+\NormalTok{spEventProbBr142\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(spEventProbBr142[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{$}\NormalTok{data)}
+\NormalTok{spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"0"}\NormalTok{, }\StringTok{"No Speciation"}\NormalTok{)}
+\NormalTok{spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State }\OtherTok{\textless{}{-}} \FunctionTok{replace}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State, spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\StringTok{"Speciation"}\NormalTok{)}
+
+\FunctionTok{pie}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{main =} \StringTok{"Probability of speciation Branch 142"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-44.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{png}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr142.png"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{pdf}\NormalTok{(}\AttributeTok{file=}\FunctionTok{paste}\NormalTok{(outFigsDir, }\StringTok{"traderpros.spEventProbBr142.pdf"}\NormalTok{))}
+\FunctionTok{pie}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{Probability, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{State, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(spEventProbBr142\_table}\SpecialCharTok{$}\NormalTok{Probability, }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\FunctionTok{dev.off}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## pdf 
+##   2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\CommentTok{\# Species delimitation probabilities \#}
+\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+
+\CommentTok{\# Probability C. neovespera (branch 115) be the same species as C. bullis (branch 140)}
+\NormalTok{P\_synonym }\OtherTok{=}\NormalTok{  spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{]}
+
+\CommentTok{\# Probability C. neovespera (branch 115) be different species species as C. bullis (branch 140)}
+\NormalTok{P\_valid }\OtherTok{=}\NormalTok{  spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{+}
+\NormalTok{           spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{+}
+\NormalTok{           spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{]}
+
+\NormalTok{lab }\OtherTok{=} \FunctionTok{c}\NormalTok{(}\StringTok{"synonym"}\NormalTok{, }\StringTok{"not synonym"}\NormalTok{)}
+\FunctionTok{pie}\NormalTok{(}\FunctionTok{c}\NormalTok{(P\_synonym,P\_valid), }\AttributeTok{main =} \StringTok{"Delimitation probability"}\NormalTok{, }\AttributeTok{labels =} \FunctionTok{paste}\NormalTok{( lab, }\StringTok{" "}\NormalTok{, }\FunctionTok{round}\NormalTok{(}\FunctionTok{c}\NormalTok{(P\_synonym,P\_valid), }\DecValTok{2}\NormalTok{), }\StringTok{"\%"}\NormalTok{, }\AttributeTok{sep=}\StringTok{""}\NormalTok{),  }\AttributeTok{border=}\StringTok{"white"}\NormalTok{, }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(colors[}\DecValTok{1}\NormalTok{],colors[}\DecValTok{11}\NormalTok{] ))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{plot_files/figure-latex/unnamed-chunk-1-45.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Probability of the three possible speciation histories that would make C. neovespera a valid species}
+\NormalTok{P\_history\_1 }\OtherTok{=}\NormalTok{  spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }
+\NormalTok{P\_history\_2 }\OtherTok{=}\NormalTok{  spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }
+\NormalTok{P\_history\_3 }\OtherTok{=}\NormalTok{  spEventProbBr115\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr140\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{]}
+
+\FunctionTok{paste}\NormalTok{(}\StringTok{"The probability of the speciation history 1, 2 and 3 are"}\NormalTok{, }\FunctionTok{round}\NormalTok{(P\_history\_1, }\DecValTok{3}\NormalTok{), }\FunctionTok{round}\NormalTok{(P\_history\_2, }\DecValTok{3}\NormalTok{), }\FunctionTok{round}\NormalTok{(P\_history\_3, }\DecValTok{3}\NormalTok{), }\StringTok{"respectively"}\NormalTok{, }\AttributeTok{sep=}\StringTok{" "}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "The probability of the speciation history 1, 2 and 3 are 0.033 0.1 0.004 respectively"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Probability new populations being a new species (branch 119, 118, 127) different from C. baronia (branch 116, 117, 128)}
+\NormalTok{P\_new }\OtherTok{=}\NormalTok{  spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*}
+\NormalTok{         spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{+}
+\NormalTok{         spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}
+\NormalTok{         spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{+} 
+\NormalTok{         spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*}
+\NormalTok{         spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{2}\NormalTok{]}
+
+\NormalTok{P\_new}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.1079359
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{P\_notNew }\OtherTok{=}\NormalTok{  spEventProbBr119\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr118\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr127\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}
+\NormalTok{            spEventProbBr116\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr117\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*}\NormalTok{ spEventProbBr128\_table}\SpecialCharTok{$}\NormalTok{Probability[}\DecValTok{1}\NormalTok{]}
+
+
+\FunctionTok{paste}\NormalTok{(}\StringTok{"Probability of being new: "}\NormalTok{, P\_new)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Probability of being new:  0.107935936516444"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{paste}\NormalTok{(}\StringTok{"Probability of being the same: "}\NormalTok{, P\_notNew)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Probability of being the same:  0.762575833303431"
+\end{verbatim}
+
+\end{document}

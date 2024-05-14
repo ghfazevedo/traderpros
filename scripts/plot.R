@@ -388,140 +388,48 @@ dev.off()
 # Species delimitation probabilities #
 ######################################
 
-# Probability one single species: no speciation in any of the branches
-P_H1 = (spEventProbBr115_table$Probability[1] * 
-        spEventProbBr116_table$Probability[1] *
-        spEventProbBr117_table$Probability[1] *
-        spEventProbBr118_table$Probability[1] *
-        spEventProbBr119_table$Probability[1] *
-        spEventProbBr127_table$Probability[1] *
-        spEventProbBr128_table$Probability[1] *
-        spEventProbBr129_table$Probability[1] *
-        spEventProbBr140_table$Probability[1] *
-        spEventProbBr141_table$Probability[1] *
-        spEventProbBr142_table$Probability[1])
+# Probability C. neovespera (branch 115) be the same species as C. bullis (branch 140)
+P_synonym =  spEventProbBr115_table$Probability[1] * spEventProbBr140_table$Probability[1]
 
-P_H2 =   (spEventProbBr115_table$Probability[1] * 
-          spEventProbBr116_table$Probability[1] *
-          spEventProbBr117_table$Probability[1] *
-          spEventProbBr118_table$Probability[1] *
-          spEventProbBr119_table$Probability[1] *
-          spEventProbBr127_table$Probability[1] *
-          spEventProbBr128_table$Probability[1] *
-          spEventProbBr129_table$Probability[2] *
-          spEventProbBr140_table$Probability[1] *
-          spEventProbBr141_table$Probability[1]) +
-         (spEventProbBr115_table$Probability[1] * 
-          spEventProbBr116_table$Probability[1] *
-          spEventProbBr117_table$Probability[1] *
-          spEventProbBr118_table$Probability[1] *
-          spEventProbBr119_table$Probability[1] *
-          spEventProbBr127_table$Probability[1] *
-          spEventProbBr128_table$Probability[1] *
-          spEventProbBr129_table$Probability[1] *
-          spEventProbBr140_table$Probability[1] *
-          spEventProbBr141_table$Probability[2] )+
-         (spEventProbBr115_table$Probability[1] * 
-          spEventProbBr116_table$Probability[1] *
-          spEventProbBr117_table$Probability[1] *
-          spEventProbBr118_table$Probability[1] *
-          spEventProbBr119_table$Probability[1] *
-          spEventProbBr127_table$Probability[1] *
-          spEventProbBr128_table$Probability[1] *
-          spEventProbBr129_table$Probability[2] *
-          spEventProbBr140_table$Probability[1] *
-          spEventProbBr141_table$Probability[2] )
+# Probability C. neovespera (branch 115) be different species species as C. bullis (branch 140)
+P_valid =  spEventProbBr115_table$Probability[1] * spEventProbBr140_table$Probability[2] +
+           spEventProbBr115_table$Probability[2] * spEventProbBr140_table$Probability[1] +
+           spEventProbBr115_table$Probability[2] * spEventProbBr140_table$Probability[2]
+
+lab = c("synonym", "not synonym")
+pie(c(P_synonym,P_valid), main = "Delimitation probability", labels = paste( lab, " ", round(c(P_synonym,P_valid), 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
 
 
-P_H3 =   (spEventProbBr115_table$Probability[1] * 
-          spEventProbBr116_table$Probability[1] *
-          spEventProbBr117_table$Probability[1] *
-          spEventProbBr118_table$Probability[1] *
-          spEventProbBr119_table$Probability[1] *
-          spEventProbBr127_table$Probability[2] *
-          spEventProbBr128_table$Probability[1] *
-          spEventProbBr129_table$Probability[2] *
-          spEventProbBr140_table$Probability[1] *
-          spEventProbBr141_table$Probability[1]) +
-         (spEventProbBr115_table$Probability[1] * 
-          spEventProbBr116_table$Probability[1] *
-          spEventProbBr117_table$Probability[1] *
-          spEventProbBr118_table$Probability[1] *
-          spEventProbBr119_table$Probability[1] *
-          spEventProbBr127_table$Probability[1] *
-          spEventProbBr128_table$Probability[2] *
-          spEventProbBr129_table$Probability[2] *
-          spEventProbBr140_table$Probability[1] *
-          spEventProbBr141_table$Probability[1] )+
-         (spEventProbBr115_table$Probability[1] * 
-          spEventProbBr116_table$Probability[1] *
-          spEventProbBr117_table$Probability[1] *
-          spEventProbBr118_table$Probability[1] *
-          spEventProbBr119_table$Probability[1] *
-          spEventProbBr127_table$Probability[2] *
-          spEventProbBr128_table$Probability[2] *
-          spEventProbBr129_table$Probability[2] *
-          spEventProbBr140_table$Probability[1] *
-          spEventProbBr141_table$Probability[2] )
+# Probability of the three possible speciation histories that would make C. neovespera a valid species
+P_history_1 =  spEventProbBr115_table$Probability[1] * spEventProbBr140_table$Probability[2] 
+P_history_2 =  spEventProbBr115_table$Probability[2] * spEventProbBr140_table$Probability[1] 
+P_history_3 =  spEventProbBr115_table$Probability[2] * spEventProbBr140_table$Probability[2]
+
+paste("The probability of the speciation history 1, 2 and 3 are", round(P_history_1, 3), round(P_history_2, 3), round(P_history_3, 3), "respectively", sep=" ")
 
 
-P_H4 =   (spEventProbBr115_table$Probability[2] * 
-            spEventProbBr116_table$Probability[1] *
-            spEventProbBr117_table$Probability[1] *
-            spEventProbBr118_table$Probability[1] *
-            spEventProbBr119_table$Probability[1] *
-            spEventProbBr127_table$Probability[1] *
-            spEventProbBr128_table$Probability[1] *
-            spEventProbBr129_table$Probability[2] *
-            spEventProbBr140_table$Probability[1] *
-            spEventProbBr141_table$Probability[1]) +
-  (spEventProbBr115_table$Probability[2] * 
-     spEventProbBr116_table$Probability[1] *
-     spEventProbBr117_table$Probability[1] *
-     spEventProbBr118_table$Probability[1] *
-     spEventProbBr119_table$Probability[1] *
-     spEventProbBr127_table$Probability[1] *
-     spEventProbBr128_table$Probability[1] *
-     spEventProbBr129_table$Probability[1] *
-     spEventProbBr140_table$Probability[1] *
-     spEventProbBr141_table$Probability[2] )+
-  (spEventProbBr115_table$Probability[2] * 
-     spEventProbBr116_table$Probability[1] *
-     spEventProbBr117_table$Probability[1] *
-     spEventProbBr118_table$Probability[1] *
-     spEventProbBr119_table$Probability[1] *
-     spEventProbBr127_table$Probability[1] *
-     spEventProbBr128_table$Probability[1] *
-     spEventProbBr129_table$Probability[2] *
-     spEventProbBr140_table$Probability[1] *
-     spEventProbBr141_table$Probability[2] ) +
-  (spEventProbBr115_table$Probability[1] * 
-              spEventProbBr116_table$Probability[1] *
-              spEventProbBr117_table$Probability[1] *
-              spEventProbBr118_table$Probability[1] *
-              spEventProbBr119_table$Probability[1] *
-              spEventProbBr127_table$Probability[1] *
-              spEventProbBr128_table$Probability[1] *
-              spEventProbBr129_table$Probability[2] *
-              spEventProbBr140_table$Probability[2] *
-              spEventProbBr141_table$Probability[1]) +
-  (spEventProbBr115_table$Probability[2] * 
-     spEventProbBr116_table$Probability[1] *
-     spEventProbBr117_table$Probability[1] *
-     spEventProbBr118_table$Probability[1] *
-     spEventProbBr119_table$Probability[1] *
-     spEventProbBr127_table$Probability[1] *
-     spEventProbBr128_table$Probability[1] *
-     spEventProbBr129_table$Probability[1] *
-     spEventProbBr140_table$Probability[2] *
-     spEventProbBr141_table$Probability[2] )+
-  (spEventProbBr115_table$Probability[2] * 
-     spEventProbBr116_table$Probability[1] *
-     spEventProbBr117_table$Probability[1] *
-     spEventProbBr118_table$Probability[1] *
-     spEventProbBr119_table$Probability[1] *
-     spEventProbBr127_table$Probability[1] *
-     spEventProbBr128_table$Probability[1] *
-     spEventProbBr129_table$Probability[2] *
-     spEventProbBr140_table$Probability[2] *
-     spEventProbBr141_table$Probability[2] )
+
+# Probability new populations being a new species (branch 119, 118, 127) different from C. baronia (branch 116, 117, 128)
+P_new =  spEventProbBr119_table$Probability[1] * spEventProbBr118_table$Probability[1] * spEventProbBr127_table$Probability[2] *
+         spEventProbBr116_table$Probability[1] * spEventProbBr117_table$Probability[1] * spEventProbBr128_table$Probability[1] +
+         spEventProbBr119_table$Probability[1] * spEventProbBr118_table$Probability[1] * spEventProbBr127_table$Probability[1] *
+         spEventProbBr116_table$Probability[1] * spEventProbBr117_table$Probability[1] * spEventProbBr128_table$Probability[2] + 
+         spEventProbBr119_table$Probability[1] * spEventProbBr118_table$Probability[1] * spEventProbBr127_table$Probability[2] *
+         spEventProbBr116_table$Probability[1] * spEventProbBr117_table$Probability[1] * spEventProbBr128_table$Probability[2]
+
+P_new
+
+
+P_notNew =  spEventProbBr119_table$Probability[1] * spEventProbBr118_table$Probability[1] * spEventProbBr127_table$Probability[1] *
+            spEventProbBr116_table$Probability[1] * spEventProbBr117_table$Probability[1] * spEventProbBr128_table$Probability[1]
+
+
+paste("Probability of being new: ", P_new)
+paste("Probability of being the same: ", P_notNew)
+
+
+
+
+
+
+
