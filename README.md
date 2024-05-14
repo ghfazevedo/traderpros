@@ -198,6 +198,7 @@ for (i in 1:(n_branches)){
 ```
 
 We now iterate over the tree nodes to clamp the number of speciation events to zero if the node has child branches with descendants belonging to the same species and create moves o the number of speciation events on the other branches.
+We also create a variable to trach the nodes were we need to constrain for observed speciation events.
 
 ```R
 iteration=1
@@ -253,8 +254,12 @@ for (i in (tree.ntips()+1):n_nodes){
         moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
     }
 }
+```
 
-# Constrained speciation events
+Now we create the likelihood of observing constrained speciation events. In order to search for speciation histories that are compatible with the observed species limits in the tree, at least two out of tree branches of a node (one parent and two child) connecting two species must have events of speciation, given that we know they are different species.
+Although our algorithm do not search for all speciation evets possible, we garantee that only compatible speciation histories are sampled.
+
+```R
 iteration=1
 for (i in constrainedSpeciationNodes){
     j = iteration++
@@ -324,8 +329,6 @@ branch_speciation_events[162] ~ dnReversibleJumpMixture( 0, dnPoisson(state_bran
 moves.append( mvRJSwitch(branch_speciation_events[162], weight=1.0) )
 speciation_br142 := ifelse(branch_speciation_events[162] == 0, 0, 1)
 ```
-
-Now we create the likelihood of observing constrained speciation events. As we mentioned before, at least one speciation event must have occurred in the tree path connecting two species.
   
 We create a new tree to modify the branch lengths according to the number of speciation events
 ```R
