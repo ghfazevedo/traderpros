@@ -18,8 +18,8 @@ seed_number=0
 workDirPath = "../../"
 dataDirPath = workDirPath + "data/"
 outDirPath = workDirPath + "outputsSpDelimitation/"
-outputPrefix = "traderpros_H9"
-popMapPath = dataDirPath + "popmapsHyp/popmapH9.tsv"
+outputPrefix = "traderpros_H13"
+popMapPath = dataDirPath + "popmapsHyp/popmapH13.tsv"
 treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
 traitPath = dataDirPath + "CicTroglomorphism.nex"
 
