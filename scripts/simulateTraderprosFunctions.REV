@@ -1,0 +1,120 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script contains the functions to simulate data under the TraDeRProS model. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+
+function simTrader(String    outPrefix="SimTrader",
+                    String    outFolder="./SimTraderdata/",
+                    String    treePath,
+                    RealPos   global_trans_rate,
+                    RealPos[] relative_transition,
+                    RealPos[] rf,
+                    RealPos[] stateSpecificRates,
+                    Natural   n_simulations
+                    ){
+
+                # Read the tree file
+                tree <- readTrees(treePath)[1]
+
+                
+                # Get the number of nodes and branches
+                n_nodes <- tree.nnodes()
+                n_branches <- n_nodes -1
+                
+                # Q matrix
+                Q := fnFreeK(relative_transition, rescale=TRUE)
+                
+
+                for ( n in 1:n_simulations){
+                trait_evol ~ dnPhyloCTMCDASiteIID(tree,
+                                                  Q,
+                                                  branchRates=global_trans_rate,
+                                                  type="Standard",
+                                                  nSites=1,
+                                                  rootFrequencies=rf)
+
+                # State specific branch rates
+                for(i in 1:n_branches) {
+                    state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
+                }
+                
+                # Get br length
+                for(i in 1:n_branches) {
+                    brlen[i] := tree.branchLength(i)
+                }
+                
+                # Stochastic speciation events on branches
+                for (i in 1:(n_branches)){
+                    branch_speciation_events[i] ~ dnPoisson(state_branch_rate[i]*brlen[i])
+                }
+                
+                # The tree with speciation events as branch lengths
+                topology[n] <- readBranchLengthTrees(treePath)[1]
+                topology[n].renumberNodes(tree)
+                SpeciationBranchTreePopNames := fnTreeAssembly(topology[n], branch_speciation_events)
+                
+                writeNexus(SpeciationBranchTreePopNames, filename=outFolder + outPrefix + "_Tree_" + n + ".tre")
+                writeNexus(trait_evol, filename=outFolder + outPrefix + "_traitMatrix_" + n + ".nexus")
+                }
+}
+
+function simProtracted(String    outPrefix="SimPro",
+                       String    outFolder="./SimProdata/",
+                       String    treePath,
+                       RealPos   global_trans_rate,
+                       RealPos[] relative_transition,
+                       RealPos[] rf,
+                       RealPos   SpeciationComplRate,
+                       Natural   n_simulations
+                      ){
+
+                # Read the tree file
+                tree <- readTrees(treePath)[1]
+                
+                # Get the number of nodes and branches
+                n_nodes <- tree.nnodes()
+                n_branches <- n_nodes -1
+                
+                # Q matrix
+                Q := fnFreeK(relative_transition, rescale=TRUE)
+                
+
+                for ( n in 1:n_simulations){
+                trait_evol ~ dnPhyloCTMCDASiteIID(tree,
+                                                  Q,
+                                                  branchRates=global_trans_rate,
+                                                  type="Standard",
+                                                  nSites=1,
+                                                  rootFrequencies=rf)
+
+                # State specific branch rates
+                for(i in 1:n_branches) {
+                    state_branch_rate[i] := SpeciationComplRate
+                }
+                
+                # Get br length
+                for(i in 1:n_branches) {
+                    brlen[i] := tree.branchLength(i)
+                }
+                
+                # Stochastic speciation events on branches
+                for (i in 1:(n_branches)){
+                    branch_speciation_events[i] ~ dnPoisson(state_branch_rate[i]*brlen[i])
+                }
+                
+                # The tree with speciation events as branch lengths
+                topology[n] <- readBranchLengthTrees(treePath)[1]
+                topology[n].renumberNodes(tree)
+                SpeciationBranchTreePopNames := fnTreeAssembly(topology[n], branch_speciation_events)
+                
+                writeNexus(SpeciationBranchTreePopNames, filename=outFolder + outPrefix + "_tree_" + n + ".tre")
+                writeNexus(trait_evol, filename=outFolder + outPrefix + "_traitMatrix_" + n + ".nexus")
+                }
+}

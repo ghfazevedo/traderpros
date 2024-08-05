@@ -1,0 +1,32 @@
+#####################################################################################
+#
+# Trait Dependent Protracted Speciation Model TraDeRProS with RevBayes
+#
+# This script simulates data under the TraDeRProS model. 
+# 
+# authors: Guilherme Azevedo
+# Please see and cite Azevedo et al. 2024
+#
+#####################################################################################
+
+source("./simulateTraderprosFunctions.REV")
+
+simTrader(outPrefix="SimTrader",
+          outFolder="../SimTraderdata/",
+          treePath="../data/BPPConstraint.MCC.CAH.nex",
+          global_trans_rate=0.0331,
+          relative_transition=v(0.8128, 0.1872),
+          rf=v(0.6009,0.3991),
+          stateSpecificRates=v(0.3047287, 0.26089883),
+          n_simulations=30
+          )
+
+
+simProtracted(outPrefix="SimPro",
+              outFolder="../SimProdata/",
+              treePath="../data/BPPConstraint.MCC.CAH.nex",
+              global_trans_rate=0.0331,
+              relative_transition=v(0.8128, 0.1872),
+              rf=v(0.6009,0.3991),
+              SpeciationComplRate=0.5656275,
+              n_simulations=30)
