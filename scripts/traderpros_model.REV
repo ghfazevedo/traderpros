@@ -54,8 +54,7 @@ n_states <- trait.getStateDescriptions().size()
 # Q matrix
 Q := fnFreeK(relative_transition, rescale=TRUE)
 
-# Root prior
-rf <- simplex(rep(1,n_states))
+# Root prior was set on the setup file
 
 # If you do not want to assume equal probabilities:
 #rf_prior <- rep(1, n_states)
@@ -105,26 +104,19 @@ for(i in 1:n_branches) {
 }
 
 # The Trait Dependent Rates Protracted Speciation Tree
-TreeSpeciesTip <- readBranchLengthTrees(treePath)[1]
-TreeSpeciesTip.renumberNodes(tree)
+TreeSpeciesTip <- tree
 for (i in 1:popMap.size()){
     TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
     }
-write(TreeSpeciesTip, filename=outDirPath+outputPrefix+".SpeciesName.tree" )
-
-# Get br length
-for(i in 1:n_branches) {
-    brlen[i] := tree.branchLength(i)
-}
+writeNexus(TreeSpeciesTip, filename=outDirPath+outputPrefix+".SpeciesName.nex" )
 
 # Stochastic speciation events on branches
 for (i in 1:(n_branches)){
-    branch_speciation_events[i] ~ dnPoisson(state_branch_rate[i]*brlen[i])
+    branch_speciation_events[i] ~ dnPoisson(state_branch_rate[i]*TreeSpeciesTip.branchLength(i))
 }
 
-# Iterate to clamp observed non-speciation completion events
+# Iterate to clamp observed non-speciatipn completion events
 iteration=1
-indexA=1
 for (i in (tree.ntips()+1):n_nodes){
     j=iteration++
     # Visit every internal node i of the tree and get child branches indices and branch lengths
@@ -156,152 +148,95 @@ for (i in (tree.ntips()+1):n_nodes){
     if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE & c2splist[j].contains("unknown")==FALSE) & ( c1splist[j][1] == c2splist[j][1])) {
         branch_speciation_events[c1[j]].clamp(0)
         branch_speciation_events[c2[j]].clamp(0)
-    } else if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE & c2splist[j].contains("unknown")==FALSE) & ( c1splist[j][1] != c2splist[j][1])) {
-        constrainedSpeciationNodes[indexA++] <- i
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
-        # set initial values to avoid initialization problems
-        branch_speciation_events[c1[j]].setValue(1)
-        branch_speciation_events[c2[j]].setValue(1)
-#    } else if ((c1splist.contains("unknown")==FALSE & c2splist.contains("unknown")==FALSE) & ((c1splist.size() == 1 & c2splist.size() > 1) | (c1splist.size() > 1 & c2splist.size() == 1) ) & ( c1splist[1] != c2splist[1]) ) {
-    } else if ( ( (c1splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE) & ( (c2splist[j].size() ==2 & c2splist[j].contains("unknown")==TRUE) | c2splist[j].size() > 2 ) )  |  ( (c2splist[j].size() == 1 & c2splist[j].contains("unknown")==FALSE) & ( (c1splist[j].size() ==2 & c1splist[j].contains("unknown")==TRUE) | c1splist[j].size() > 2 ) )  ){
-        constrainedSpeciationNodes[indexA++] <- i
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
-        # set initial values to avoid initialization problems
-        branch_speciation_events[c1[j]].setValue(1)
-        branch_speciation_events[c2[j]].setValue(1)
     } else {
         moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
         moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
+        branch_speciation_events[c1[j]].setValue(1)
+        branch_speciation_events[c2[j]].setValue(1)
     }
 }
 
-# Constrained speciation events
-iteration=1
-for (i in constrainedSpeciationNodes){
-    j = iteration++
-    cc1[j] = TreeSpeciesTip.child(i, 1)
-    cc2[j] = TreeSpeciesTip.child(i, 2)
-    nBranchesWithSpeciation[j] := (ifelse(branch_speciation_events[i]==0, 0, 
-                                    floor(branch_speciation_events[i]/branch_speciation_events[i]))) +
-                                  (ifelse(branch_speciation_events[cc1[j]]==0, 0,
-                                    floor(branch_speciation_events[cc1[j]]/branch_speciation_events[cc1[j]]))) +
-                                  (ifelse(branch_speciation_events[cc2[j]]==0, 0,
-                                    floor(branch_speciation_events[cc2[j]]/branch_speciation_events[cc2[j]])))
-    min_branches_with_speciation = 2
-    max_branches_with_speciation = 3
-    constraintViolation[j] ~ dnUniformInteger(nBranchesWithSpeciation[j] - max_branches_with_speciation,
-                                   nBranchesWithSpeciation[j] - min_branches_with_speciation)
-    constraintViolation[j].clamp(0)                               
-}
-
 # Reversible jump to track probability of speciation in target branches
-branch_speciation_events[115] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[115]*brlen[115]), p=0.5 )
+branch_speciation_events[115] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[115]*TreeSpeciesTip.branchLength(115)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[115], weight=1.0) )
 speciation_br115 := ifelse(branch_speciation_events[115] == 0, 0, 1)
 
-branch_speciation_events[116] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[116]*brlen[116]), p=0.5 )
+branch_speciation_events[116] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[116]*TreeSpeciesTip.branchLength(116)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[116], weight=1.0) )
 speciation_br116 := ifelse(branch_speciation_events[116] == 0, 0, 1)
 
-branch_speciation_events[117] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[117]*brlen[117]), p=0.5 )
+branch_speciation_events[117] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[117]*TreeSpeciesTip.branchLength(117)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[117], weight=1.0) )
 speciation_br117 := ifelse(branch_speciation_events[117] == 0, 0, 1)
 
-branch_speciation_events[118] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[118]*brlen[118]), p=0.5 )
+branch_speciation_events[118] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[118]*TreeSpeciesTip.branchLength(118)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[118], weight=1.0) )
 speciation_br118 := ifelse(branch_speciation_events[118] == 0, 0, 1)
 
-branch_speciation_events[119] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[119]*brlen[119]), p=0.5 )
+branch_speciation_events[119] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[119]*TreeSpeciesTip.branchLength(119)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[119], weight=1.0) )
 speciation_br119 := ifelse(branch_speciation_events[119] == 0, 0, 1)
 
-branch_speciation_events[127] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[127]*brlen[127]), p=0.5 )
+branch_speciation_events[127] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[127]*TreeSpeciesTip.branchLength(127)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[127], weight=1.0) )
 speciation_br127 := ifelse(branch_speciation_events[127] == 0, 0, 1)
 
-branch_speciation_events[128] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[128]*brlen[128]), p=0.5 )
+branch_speciation_events[128] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[128]*TreeSpeciesTip.branchLength(128)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[128], weight=1.0) )
 speciation_br128 := ifelse(branch_speciation_events[128] == 0, 0, 1)
 
-branch_speciation_events[129] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[129]*brlen[129]), p=0.5 )
+branch_speciation_events[129] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[129]*TreeSpeciesTip.branchLength(129)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[129], weight=1.0) )
 speciation_br129 := ifelse(branch_speciation_events[129] == 0, 0, 1)
 
-branch_speciation_events[140] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[140]*brlen[140]), p=0.5 )
+branch_speciation_events[140] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[140]*TreeSpeciesTip.branchLength(140)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[140], weight=1.0) )
 speciation_br140 := ifelse(branch_speciation_events[140] == 0, 0, 1)
 
-branch_speciation_events[141] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[141]*brlen[141]), p=0.5 )
+branch_speciation_events[141] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[141]*TreeSpeciesTip.branchLength(141)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[141], weight=1.0) )
 speciation_br141 := ifelse(branch_speciation_events[141] == 0, 0, 1)
 
-branch_speciation_events[142] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[142]*brlen[142]), p=0.5 )
+branch_speciation_events[142] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[142]*TreeSpeciesTip.branchLength(142)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[142], weight=1.0) )
 speciation_br142 := ifelse(branch_speciation_events[142] == 0, 0, 1)
 
-branch_speciation_events[162] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[162]*brlen[162]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[162], weight=1.0) )
-speciation_br142 := ifelse(branch_speciation_events[162] == 0, 0, 1)
-
-
 # The tree with speciation events as branch lengths
-SpeciationBranchTree := fnTreeAssembly(TreeSpeciesTip, branch_speciation_events)
-
-# The tree below is the same as above, but with population names. This is the one we are interested to see, although the one above is used for the actual algorithm.
 topology <- readBranchLengthTrees(treePath)[1]
 topology.renumberNodes(tree)
-SpeciationBranchTreePopNames := fnTreeAssembly(topology, branch_speciation_events)
+for (i in 1:popMap.size()){
+    topology.setTaxonName(popMap[i][1], popMap[i][2] )
+    }
 
-# Species delimitation tree
+SpeciationBranchTree := fnTreeAssembly(topology, branch_speciation_events)
+
+
+# The tree below is the same as above, but with population names
+topologyPopNames <- readBranchLengthTrees(treePath)[1]
+topologyPopNames.renumberNodes(tree)
+SpeciationBranchTreePopNames := fnTreeAssembly(topologyPopNames, branch_speciation_events)
+
+# Species tree with binary speciation events: 0. no speciation; 1. one or more speciation
 for (i in 1:branch_speciation_events.size()){
     if (branch_speciation_events[i] > 0 ){
-        branch_speciation_binary[i] <- 1
+        branch_speciation_binary[i] <- abs(1)
     } else {
-        branch_speciation_binary[i] <- 0
+        branch_speciation_binary[i] <- abs(0)
     }
 }
 SpeciationBranchTreeBinary := fnTreeAssembly(SpeciationBranchTreePopNames, branch_speciation_binary)
 
 
-# The likelihood function to constraint search to events compatible with the observed species limits
+# The code below is used to constrain the search of speciation branch trees that are compatible with our observed species. 
+# For this we use a matrix which trait states indicate the species assignments, and populations with unknow identity are coded with "?"
 
-#print("Creating speciation distance matrix...")
-#
-#distanceMatrix := fnTreePairwiseDistances(SpeciationBranchTree)
-#
-#index=1
-#for (i in 1:distanceMatrix.size()){
-#    for (j in 1:distanceMatrix.size()){
-#      if ((distanceMatrix.names()[i] != distanceMatrix.names()[j]) & (distanceMatrix.names()[i]!= "unknown" & distanceMatrix.names()[j]!= "unknown")){
-#        m=index++
-#        constraintViolation[m] ~ dnUniform(distanceMatrix.matrix()[i][j]- maxSpeciationEventsBetween2Tips,
-#                                           distanceMatrix.matrix()[i][j]- 1)
-#        constraintViolation[m].clamp(0) 
-#      }
-#    }
-#}
-#
-#
-#index=1
-#for (i in 1:distanceMatrix.size()){
-#    for (j in 1:distanceMatrix.size()){
-#      if ((distanceMatrix.names()[i] != distanceMatrix.names()[j]) & (distanceMatrix.names()[i]!= "unknown" & distanceMatrix.names()[j]!= "unknown")){
-#        m=index++
-#        constraintViolation[m] ~ dnUniform(distanceMatrix.matrix()[i][j]- maxSpeciationEventsBetween2Tips,
-#                                           distanceMatrix.matrix()[i][j]- 1)
-#        constraintViolation[m].clamp(0) 
-#      }
-#    }
-#}
+speciesData = readDelimitedCharacterData(file=speciesDataPath, stateLabels=max_number_of_species )
+Qs <- fnFreeK(rep(1, max_number_of_species^2), rescale=FALSE)
 
-# Constraint for the minimum number of speciation in the whole tree
-#n_speciation_events := sum(branch_speciation_events)
-#deviation_of_expected_events ~ dnUniformInteger(n_speciation_events - (max_n_species-1),
-#                                   n_speciation_events - (min_n_species-1)
-#                                   )
-#deviation_of_expected_events.clamp(0)
+speciation ~ dnPhyloCTMC(tree=SpeciationBranchTreePopNames, Q=Qs, type="NaturalNumbers")
+# I first ran with the phyloCRMC above, but I guess the code below should work too. I guess it should not metter.
+#speciation ~ dnPhyloCTMC(tree=SpeciationBranchTreeBinary, Q=Qs, type="NaturalNumbers")
+speciation.clamp(speciesData)
 
 # Finalize the model
 mymodel = model(branch_speciation_events)

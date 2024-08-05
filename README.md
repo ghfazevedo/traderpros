@@ -11,14 +11,14 @@ Clone this directory, start RevBayes from your [scripts](./scripts) directory.
 ```R
 git clone LINK
 
-cd TraderProS/scripts
+cd traderpros/scripts
 
 rb 
 ```
 
 Set seed if you want to replicate the analysis.
 ```R
-seed(426252204)
+seed(1)
 ```  
 
 Set the path to inputs and outputs  
@@ -31,6 +31,7 @@ outputPrefix = "traderpros"
 popMapPath = dataDirPath + "popmap.tsv"
 treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
 traitPath = dataDirPath + "CicTroglomorphism.nex"
+speciesDataPath=dataDirPath+"SpeciesMatrix.txt"
 ```
 
 Create helpers variables vor the moves and monitors.
@@ -40,23 +41,26 @@ monitors = VectorMonitors()
 ```  
 
 ### The Data
-We first read the tree, the population to species map, the trait data and get some variables to use later. The population to species map is a tab delimited file, with headers, which the first column is the population (the name of the tips in the tree file) and the second column is the species from which the population belongs to. If the species assignment is uncertain, the species name should be "unknown". The algorithm will ignore those for estimating the trait specific rates. Note that the uncertainty on species partition is not averaged her, but could be possible if you sample from all possible (or a few) different species partition.
+We first read the tree, the population to species map, the trait data and get some variables to use later. The population to species map is a tab delimited file, with headers, which the first column is the population (the name of the tips in the tree file) and the second column is the species from which the population belongs to. If the species assignment is uncertain, the species name should be "unknown". The algorithm will average across possible assignments, including the possibility of them being new species. You can use the most probable history of speciation summarized at the end of the analyses to delimit species.  
+
 
 ```R
 # Read the tree file
 tree <- readTrees(treePath)[1]
 
+# Save tree with branch indexes (if you want to check the probability of speciation event on a branch later)
+writeNexus(tree, filename=outDirPath+outputPrefix+"_indexed.tree.nex")
+
 # Get the number of nodes and branches
 n_nodes <- tree.nnodes()
 n_branches <- n_nodes -1
 
-# Save tree with branch indexes
-writeNexus(tree, filename=outDirPath+outputPrefix+"_indexed.tree.nex")
-
-
 # Read population to species map
 popMap = readDataDelimitedFile(popMapPath, header=TRUE)
+```
+>Note: I tried to use the ReadTaxonData() and a loop with the taxon() function to assign species to tip similar to how is done for the dnMultiSpeciesCoalescent(), but it did not work well.  
 
+```R
 # Read trait data
 trait <- readDiscreteCharacterData(traitPath)
 
@@ -65,21 +69,21 @@ n_states <- trait.getStateDescriptions().size()
 ```
   
 ### The transition matrix
-We first define the prior on the global trait transition rate. Although it is possible to independently infer the transition rates here with a less informative distribution, we will use a distribution based on the results of a previous analyses using HiSSE [here](). It has been shown before that transition rates might be wrongly inferred if it is influencing the tree shape in a state dependent birth and death model (REF). Ideally, we would use a birth and death tree process jointly with our protracted speciation to estimate rates in a trait dependent protracted speciation birth and death. However that could be time consuming, so we first jointly inferred the transition, extinction (death) and population formation (birth) in a HiSSE model, and use the posterior distribution to inform our transition rate here. The protracted speciation part of the model will be determined later here.
+We first define the prior on the global trait transition rate. Although it is possible to independently infer the transition rates here with a less informative distribution, we will use a distribution based on the results of a previous analyses using HiSSE [here](). It has been shown before that transition rates might be wrongly inferred if it is influencing the tree shape in a state dependent birth and death model (REF). It might also be possible to use a birth and death tree process jointly with our protracted speciation to estimate rates in a trait dependent protracted speciation birth and death. However that could be time consuming and our data might not have enough power to infer a hidden state protractes speciation completion rate (that needs to be explored). Therefore we prefer to first jointly inferred the transition, extinction (death) and population formation (birth) in a HiSSE model, and use the posterior distribution to inform our transition rate here.
 
 ```R
 global_trans_rate <-0.0331
 relative_transition <- v(0.8128, 0.1872)
 ```
 
->Use the code below instead if you want to estimate the transition rate using a exponential distribution
+>If you prefer not to estimate the transition rates in a previous SSE analysis, you can co-estimate the transition rates together with the protracted speciation completion rate using the code below.
 >>```
->>traRate_expoDistrib_parameter <- 10
->>global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
->>moves.append( mvScale( global_trans_rate, weight=1 ) )
+>>>traRate_expoDistrib_parameter <- 10
+>>>global_trans_rate ~  dnExp(traRate_expoDistrib_parameter)
+>>>moves.append( mvScale( global_trans_rate, weight=1 ) )
 >>```
 >  
->Also, if you are estimating the rates you should draw the relative transition rates from a distribution, such as a flat Dirichlet distribution. We also can create a reversible jump to test if troglomorphism is reversible
+>Also, if you are estimating the rates you should draw the relative transition rates from a distribution, such as a flat Dirichlet distribution. We can also create a reversible jump to test for reversibility in your trait
 >>```R
 >>n_rates = n_states * (n_states-1)
 >>relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_states)), p=0.5 )
@@ -96,16 +100,20 @@ We can now create our transition rate matrix.
 Q := fnFreeK(relative_transition, rescale=TRUE)
 ```
 
-We also  create a prior for the root state frequency. We assume equal probabilities.
+We also  create a prior for the root state frequency. We ca assume equal probabilities, sample from a prior distribution or fix it. We based on our previous HiSSE result to set it to a fixed value.
 ```R
-rf <- simplex(rep(1,n_states))
-# We set the root state based on previous analyses
-#rf <- simplex(1,0)
+rf <- simplex(0.6009,0.3991)
 ```
+>Use the code below to estimate the root frequencies
+>```
+>rf_prior <- rep(1, n_states)
+>rf ~ dnDirichlet( rf_prior )
+>moves.append( mvDirichletSimplex( rf, weight=1 ) )
+>```
 
 We will use data augmentation to sample the trait history evolution along the tree, similar to what is done [here](https://revbayes.github.io/tutorials/cont_traits/state_dependent_bm.html).  
 
-Now we can create our augmented data matrix DAG node of our model that sample the trait evolution history. We clamp the node to our observed trait matrix.
+Now we can create our augmented data matrix DAG node of our model that sample the trait evolution history. We clamp the node to our observed trait data.
 ```R
 trait_evol ~ dnPhyloCTMCDASiteIID(tree,
                                   Q,
@@ -134,17 +142,16 @@ moves.append( mvCharacterHistory(ctmc=trait_evol,
 ### Speciation Completion Rates
 We sample a global rate from an exponential distribution.
 
-
 ```R
-SpeciationComplRate ~ dnExponential(1)
+spcompletion_expoDistParam <- 1
+SpeciationComplRate ~ dnExponential(spcompletion_expoDistParam)
 ```  
-
 We need to create moves to the speciation completion rates.
 ```R
 moves.append(mvScale(SpeciationComplRate, weight=1))
 ```
 
-The global rate is the sum of each state specific rate. To determine the vector of state specific rates, we first draw proportional weights from a Dirichlet distribution with flat prior. Then, we multiply each rate by the global rate to have each state specific rates. We use a reversible jump to test for state dependent rates.
+The global rate is the sum of each state specific rate. To determine the vector of state specific rates, we first draw proportional weights from a Dirichlet distribution with flat prior. Then, we multiply each rate by the global rate to have each state specific rates. We use a reversible jump to test for state dependent rates (that is, if the two rates are the same or not).
 
 ```R
 stateSpecificRateWeights ~ dnReversibleJumpMixture( simplex(rep(1, n_states)), dnDirichlet(rep(1, n_states)), p=0.5 )
@@ -154,14 +161,14 @@ moves.append(mvSimplex(stateSpecificRateWeights, weight=1))
 
 is_spCompletion_state_dependent := ifelse( stateSpecificRateWeights == simplex(rep(1, n_states)), 0.0, 1.0)
 
-# If you do not want to use a reversible jum, just use the commented code below, instead.
+# If you do not want to use a reversible jump, just use the commented code below, instead.
 #stateSpecificRateWeights ~ dnDirichlet(rep(1, n_states))
 #moves.append(mvSimplex(stateSpecificRateWeights, weight=1))
 
 stateSpecificRates := stateSpecificRateWeights * SpeciationComplRate
 ```
 
-The branch specific rates are determined by the relative time spent on each trait in that branch. The method `trait_evol.relativeTimeInStates(i,1)` calculates the proprtion of time the charcater 1 spent on each state in the branch *i*.
+The branch specific rates are determined by the relative time spent on each trait in that branch. The method `trait_evol.relativeTimeInStates(i,1)` calculates the proportion of time the characater 1 spent on each state in the branch *i*.
 ```R
 for(i in 1:n_branches) {
     state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
@@ -171,38 +178,29 @@ for(i in 1:n_branches) {
 ## The Trait Dependent Rates Protracted Speciation Tree
 We first use our population map to replace the tip names for species names.
 ```R
-TreeSpeciesTip <- readBranchLengthTrees(treePath)[1]
-TreeSpeciesTip.renumberNodes(tree)
+TreeSpeciesTip <- tree
 for (i in 1:popMap.size()){
     TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
     }
+# We save the tree with species names to check.
 write(TreeSpeciesTip, filename=outDirPath+outputPrefix+".SpeciesName.tree" )
 ```
 
-Our model is similar to the one used in [DELINEATE](https://jeetsukumaran.github.io/delineate/) ([Sukumaran et al. 2021][1]) in the way that assumes that the number of speciation events in each branch is Poisson distributed. The difference is that the rates in each branch will vary according to the state in that branch instead of a single global rate. That is, ```N_speciation_events_branch[i] ~ Poisson(exp(state_branch_rate[i]*branch_length[i]))``` where *i* is the branch in the tree, and *state_branch_rate[i]* is the rate accountinfor the time spent in each state in the branch *i* (created in the step above). We know that speciation completion did not happened on branches that connect populations, so we can constrain the number of speciation events to 0. If the branches connects populations of two different species, at least one speciation events must have happened in at least one of the sister branches. Branches that connect populations with unknown status or that connects more than two species are not used, since we cannot constrain the number of speciation events in each branch [FIGURES]().  The number of speciation events on those branches can be co-estimated with the rates.  
-With a set of rules we can visit branches in the tree and set the constraints, and calculate the likelihood of observing the constrained speciation (and no speciation) events in the tree given the ancestral states in each branch, a vector of state specific speciation completion rates and a vector of branch lengths: P(SpeciationEventsConstraints | ancestralStates, stateSpecificRates, BranchLengths). Since we are using a bayesian approach, we can sample from a prior distributions of states, rates and branch lengths to approximate the posterior distribution of the observed speciation and no speciation events: P( ancestralStates, stateSpecificRates, BranchLengths| SpeciationEventsConstraints). Here we will assume the branch lengths as fixed, so we are approximating P( ancestralStates, stateSpecificRates | SpeciationEventsConstraints, BranchLengths).  We can also co-estimate the number of speciation events on the unconstrained branches P( ancestralStates, stateSpecificRates, BranchSpeciationEvents | SpeciationEventsConstraints, BranchLengths).  
+Our model is similar to the one used in [DELINEATE](https://jeetsukumaran.github.io/delineate/) ([Sukumaran et al. 2021][1]) in the way that assumes that the number of speciation events in each branch is Poisson distributed. The difference is that the rates in each branch will vary according to the state in that branch instead of a single global rate. That is, ```N_speciation_events_branch[i] ~ Poisson(state_branch_rate[i]*branch_length[i])``` where *i* is the branch in the tree, and *state_branch_rate[i]* is the rate accounting for the time spent in each state in the branch *i* (created in the step above). We know that speciation completion did not happened on branches that connect populations, so we can clamp the number of speciation events to 0. If the branches connects populations of two different species, at least one speciation event must have happened along the path connecting these two heterospecific populations. Branches that connect populations with unknown status or that connects more than two species are not used, since we cannot constrain the number of speciation events in each branch [FIGURES]().  The number of speciation events on those branches can be co-estimated with the rates for species delimitation.  
 
-> Note: Although paraphyletic species could be used with this approach, our implementation here does not account for paraphyletic species. It can wrongly estimate parameters if paraphyletic species are used. So, do not input paraphyletic species constraints. Paraphyletic species can be inferred, though. 
+> Note: The code should work with paraphyletic species, although it is necessary to explore the effects of paraphyletic species constraints more clearly. Paraphyletic species can be inferred, though, likely with no problem.
 
 First we create an stochastic variable to hold the number of speciation events on each branch
 ```R
-# Get br length
-for(i in 1:n_branches) {
-    brlen[i] := tree.branchLength(i)
-}
-
-# Stochastic number of speciation events
 for (i in 1:(n_branches)){
-    branch_speciation_events[i] ~ dnPoisson(state_branch_rate[i]*brlen[i])
+    branch_speciation_events[i] ~ dnPoisson(state_branch_rate[i]*TreeSpeciesTip.branchLength(i))
 }
 ```
 
 We now iterate over the tree nodes to clamp the number of speciation events to zero if the node has child branches with descendants belonging to the same species and create moves o the number of speciation events on the other branches.
-We also create a variable to trach the nodes were we need to constrain for observed speciation events.
 
 ```R
 iteration=1
-indexA=1
 for (i in (tree.ntips()+1):n_nodes){
     j=iteration++
     # Visit every internal node i of the tree and get child branches indices and branch lengths
@@ -230,117 +228,42 @@ for (i in (tree.ntips()+1):n_nodes){
     }
     c2splist[j].unique()
 
-    # If node connects populations of same species, clamp the observed value to 0 to indicate that no speciation can be observed. It is only applicable if the species has known assignments. If node connects population of different species we assign moves to it so it can be sampled during MCMC.
+    # If node connects populations of same species, clamp the observed value to 0 on both daughter branches to indicate that no speciation can be observed. It is only applicable if the species has known assignments. If node connects population of different species we assign moves to it so the number of speciation events can be sampled during MCMC.
     if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE & c2splist[j].contains("unknown")==FALSE) & ( c1splist[j][1] == c2splist[j][1])) {
         branch_speciation_events[c1[j]].clamp(0)
         branch_speciation_events[c2[j]].clamp(0)
-    } else if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE & c2splist[j].contains("unknown")==FALSE) & ( c1splist[j][1] != c2splist[j][1])) {
-        constrainedSpeciationNodes[indexA++] <- i
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
-        # set initial values to avoid initialization problems
-        branch_speciation_events[c1[j]].setValue(1)
-        branch_speciation_events[c2[j]].setValue(1)
-#    } else if ((c1splist.contains("unknown")==FALSE & c2splist.contains("unknown")==FALSE) & ((c1splist.size() == 1 & c2splist.size() > 1) | (c1splist.size() > 1 & c2splist.size() == 1) ) & ( c1splist[1] != c2splist[1]) ) {
-    } else if ( ( (c1splist[j].size() == 1 & c1splist[j].contains("unknown")==FALSE) & ( (c2splist[j].size() ==2 & c2splist[j].contains("unknown")==TRUE) | c2splist[j].size() > 2 ) )  |  ( (c2splist[j].size() == 1 & c2splist[j].contains("unknown")==FALSE) & ( (c1splist[j].size() ==2 & c1splist[j].contains("unknown")==TRUE) | c1splist[j].size() > 2 ) )  ){
-        constrainedSpeciationNodes[indexA++] <- i
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
-        moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
-        # set initial values to avoid initialization problems
-        branch_speciation_events[c1[j]].setValue(1)
-        branch_speciation_events[c2[j]].setValue(1)
     } else {
         moves.append(mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
         moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
+        # we set a initial value just to facilitate initialization of the MCMC
+        branch_speciation_events[c1[j]].setValue(1)
+        branch_speciation_events[c2[j]].setValue(1)
     }
 }
 ```
 
-Now we create the likelihood of observing constrained speciation events. In order to search for speciation histories that are compatible with the observed species limits in the tree, at least two out of tree branches of a node (one parent and two child) connecting two species must have events of speciation, given that we know they are different species.
-Although our algorithm do not search for all speciation evets possible, we garantee that only compatible speciation histories are sampled.
+We can add a reversible jump to track the probability of having speciation events on branches of interest. You can check the branch index in the [indexed tree created in the beginning of the tutorial](outputs/traderpros_indexed.tree.nex). This is optional, since you can see the species delimitation result in the MAP tree with speciation events at the end. Also, if you have many unknown populations, the number of branches can be large and the interpretation might be tricky. However this approach might be interesting for some cases if you want to investigate the support in favor of a specific hypothesis of species limits around a few branches. Here we will test the hypothesis of *Cicurina neovespera* being conspecific with *C. bullis*, that is, no speciation event on branches number 115 (*C. neovespera* branch) and 140 (MRCA of all *C. bullis* populations).
+
 
 ```R
-iteration=1
-for (i in constrainedSpeciationNodes){
-    j = iteration++
-    cc1[j] = TreeSpeciesTip.child(i, 1)
-    cc2[j] = TreeSpeciesTip.child(i, 2)
-    nBranchesWithSpeciation[j] := (ifelse(branch_speciation_events[i]==0, 0, 
-                                    floor(branch_speciation_events[i]/branch_speciation_events[i]))) +
-                                  (ifelse(branch_speciation_events[cc1[j]]==0, 0,
-                                    floor(branch_speciation_events[cc1[j]]/branch_speciation_events[cc1[j]]))) +
-                                  (ifelse(branch_speciation_events[cc2[j]]==0, 0,
-                                    floor(branch_speciation_events[cc2[j]]/branch_speciation_events[cc2[j]])))
-    min_branches_with_speciation = 2
-    max_branches_with_speciation = 3
-    constraintViolation[j] ~ dnUniformInteger(nBranchesWithSpeciation[j] - max_branches_with_speciation,
-                                   nBranchesWithSpeciation[j] - min_branches_with_speciation)
-    constraintViolation[j].clamp(0)                               
-}
-```
-
-We add a reversible jump to track the probability of having speciation events on branches of interest. You can check the branch index in the [tree with species names](outputs/traderpros.SpeciesName.tree)
-```R
-branch_speciation_events[115] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[115]*brlen[115]), p=0.5 )
+branch_speciation_events[115] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[115]*TreeSpeciesTip.branchLength(115)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[115], weight=1.0) )
 speciation_br115 := ifelse(branch_speciation_events[115] == 0, 0, 1)
-
-branch_speciation_events[116] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[116]*brlen[116]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[116], weight=1.0) )
-speciation_br116 := ifelse(branch_speciation_events[116] == 0, 0, 1)
-
-branch_speciation_events[117] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[117]*brlen[117]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[117], weight=1.0) )
-speciation_br117 := ifelse(branch_speciation_events[117] == 0, 0, 1)
-
-branch_speciation_events[118] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[118]*brlen[118]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[118], weight=1.0) )
-speciation_br118 := ifelse(branch_speciation_events[118] == 0, 0, 1)
-
-branch_speciation_events[119] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[119]*brlen[119]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[119], weight=1.0) )
-speciation_br119 := ifelse(branch_speciation_events[119] == 0, 0, 1)
-
-branch_speciation_events[127] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[127]*brlen[127]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[127], weight=1.0) )
-speciation_br127 := ifelse(branch_speciation_events[127] == 0, 0, 1)
-
-branch_speciation_events[128] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[128]*brlen[128]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[128], weight=1.0) )
-speciation_br128 := ifelse(branch_speciation_events[128] == 0, 0, 1)
-
-branch_speciation_events[129] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[129]*brlen[129]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[129], weight=1.0) )
-speciation_br129 := ifelse(branch_speciation_events[129] == 0, 0, 1)
-
-branch_speciation_events[140] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[140]*brlen[140]), p=0.5 )
+branch_speciation_events[140] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[140]*TreeSpeciesTip.branchLength(140)), p=0.5 )
 moves.append( mvRJSwitch(branch_speciation_events[140], weight=1.0) )
 speciation_br140 := ifelse(branch_speciation_events[140] == 0, 0, 1)
-
-branch_speciation_events[141] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[141]*brlen[141]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[141], weight=1.0) )
-speciation_br141 := ifelse(branch_speciation_events[141] == 0, 0, 1)
-
-branch_speciation_events[142] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[142]*brlen[142]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[142], weight=1.0) )
-speciation_br142 := ifelse(branch_speciation_events[142] == 0, 0, 1)
-
-branch_speciation_events[162] ~ dnReversibleJumpMixture( 0, dnPoisson(state_branch_rate[162]*brlen[162]), p=0.5 )
-moves.append( mvRJSwitch(branch_speciation_events[162], weight=1.0) )
-speciation_br142 := ifelse(branch_speciation_events[162] == 0, 0, 1)
 ```
-  
-We create a new tree to modify the branch lengths according to the number of speciation events
+> Note: The moves when the node is in Poisson distribution were already set on the previous part of the code.  
+
+Now that we clamped the observed branches with no speciation, we need to constrain our search of speciation histories to speciation events on branches that makes our species limits congruent with the observed assignments of populations to species.  
+To do that, we first create a new tree which the branch lengths corresponds to the number of speciation events sampled above. In this tree, branches connecting populations of same species will have a length of 0  
 ```R
-# We use the number of speciation events to assign branch lengths to the topology
-SpeciationBranchTree := fnTreeAssembly(TreeSpeciesTip, branch_speciation_events)
+# This tree is used mainly to create a binary speciation tree below that is used for constraining the tree search. It can also be used to check mean (or median) number of speciation events on the branches. 
+topologyPopNames <- readBranchLengthTrees(treePath)[1]
+topologyPopNames.renumberNodes(tree)
+SpeciationBranchTreePopNames := fnTreeAssembly(topologyPopNames, branch_speciation_events)
 
-# The tree below is the same as above, but with population names. This is the one we are interested to see, although the one above is used for the actual algorithm. 
-topology <- readBranchLengthTrees(treePath)[1]
-topology.renumberNodes(tree)
-SpeciationBranchTreePopNames := fnTreeAssembly(topology, branch_speciation_events)
-
-# Species delimitation tree
+# We modify the tree above to represent a tree with binary speciation events; that is,  branch length=0 if no speciation and 1 if one or more speciation events.
 for (i in 1:branch_speciation_events.size()){
     if (branch_speciation_events[i] > 0 ){
         branch_speciation_binary[i] <- abs(1)
@@ -351,36 +274,26 @@ for (i in 1:branch_speciation_events.size()){
 SpeciationBranchTreeBinary := fnTreeAssembly(SpeciationBranchTreePopNames, branch_speciation_binary)
 ```
 
->#### NOT USING THIS! Old code. DELETE!
->Now we can create a likelihood function to constrain the search to speciation history congruent with the observed >species limits. We create a pairwise distance matrix between all tips in the tree with branch lengths >representing sampled speciation events. If the distance between two tips with different species assignments is >zero, it means that the likelihood of observing that speciation history is zero. Therefore, the number of >speciation events must be between 1 and the maximum number of events allowed. We set the maximum allowed to be >the number of species in the group minus 1. You can reduce that, since we only sample ~24 species and that many >speciation events between to tips might be unlikely.
->
->```R
->distanceMatrix := fnTreePairwiseDistances(SpeciationBranchTree)
->
->index=1
->for (i in 1:distanceMatrix.size()){
->    for (j in 1:distanceMatrix.size()){
->      if ((distanceMatrix.names()[i] != distanceMatrix.names()[j]) & (distanceMatrix.names()[i]!= "unknown" & >distanceMatrix.names()[j]!= "unknown")){
->        m=index++
->        constraintViolation[m] ~ dnUniform(distanceMatrix.matrix()[i][j]- SpeciationBranchTreeBinary.treeLength(),
->                                           distanceMatrix.matrix()[i][j]- 1)
->        constraintViolation[m].clamp(0) 
->      }
->    }
->}
->```
->
->>We can also stablish a constrain for the minimum number of speciation events in the whole >tree. This should be >at least the minimum number of known species minus 1. The maximum >number can be an estimative of how many >species there are in the group. There are 76 >known species of *Cicurina* (*Cicurela*) (Hedin 2015, 2018; Paquin >and Duperree 2009; WSC >2024) if we consider 75% of the species are known, then the upper interval could be 100 >>species. We will allow the number of species to be a little smaller than the know number >of species(76), so we >con account for possible synonyms in the list of know species >names. The minimum number will be determined by >the e Using the same approach as done >above, we can create the a priori probability of he number of speciation >events being >zero if smaller than the minimum number of species.
->
->```R
->min_n_species = 70
->max_n_species = 100
->n_speciation_events := sum(branch_speciation_events)
->deviation_of_expected_events ~ dnUniformInteger(n_speciation_events - (max_n_species-1),
->                                   n_speciation_events - (min_n_species-1)
->                                   )
->deviation_of_expected_events.clamp(0)
->```
+Now we constrain our search of speciation events trees to only sample speciation events that are compatible with the observed species, i.e., trees which branches that connects different species having a length of 0 would have also 0 probability.
+For this we use a species data matrix in which the trait states indicate the species assignments, and populations with unknown identity are coded with "?" (see the [species data matrix file](data/SpeciesMatrix.txt)). This is exactly the same information as the population to species map, but numbers are used instead of species names/codes.
+We then create a phyloCTMC object which "evolves" the species assignments in the tree with speciation events as brach lengths.  
+
+```R
+# We need to inform the maximum number of species in the tree. This includes the "unknown" species that could possible be new too. For example, if you have 20 known species and 6 populations which you do not known the assignments and suspects that each of these populations could be a new species, you have a maximum of 26 species in your tree.
+max_number_of_species=26
+
+# read the matrix with species data:
+speciesData = readDelimitedCharacterData(file=speciesDataPath, stateLabels=max_number_of_species )
+
+# Create a transition matrix with equal rates of transition between all species labels
+Qs <- fnFreeK(rep(1, max_number_of_species^2), rescale=FALSE)
+
+speciation ~ dnPhyloCTMC(tree=SpeciationBranchTreePopNames, Q=Qs, type="NaturalNumbers")
+```
+We clamp the object to the species label matrix data. 
+```R
+speciation.clamp(speciesData)
+```
 
 We can now finalize our model 
 ```R
@@ -391,13 +304,13 @@ mymodel = model(branch_speciation_events)
 Define the number of generations, burn in and print frequency
 ```R
 ## Number of generations
-n_gen = 1000000
+n_gen = 500000
 ## Print to screen every x generations
-n_print_screen = 1000
+n_print_screen = 100
 ## Print parameters to file every x generations
-n_print_log = 1000
+n_print_log = 100
 ## Print tree to file every x generations
-n_print_tree=1000
+n_print_tree=100
 ## Number of independent runs
 n_runs = 1
 ## Create checkpoint file every x generations
@@ -408,9 +321,6 @@ burnin_percentage = 0.10
 
 Monitor variables of interest
 ```R
-# print to screen
-monitors.append( mnScreen(printgen=n_print_screen) )
-
 # Monitor all parameters
 monitors.append( mnModel(file=outDirPath+outputPrefix+".model.log", 
                           printgen=n_print_log) )
@@ -420,18 +330,24 @@ monitors.append( mnFile(SpeciationComplRate, stateSpecificRates,
                         filename=outDirPath+outputPrefix+".Rates.log",
                         printgen=n_print_log) )
 
-# monitor reversible jumps hypotheses
-monitors.append( mnFile(is_troglo_reversible, 
-                        is_spCompletion_state_dependent,
+# monitor reversible jump hypotheses to test for equal rates and for speciation events on branches of interest.
+monitors.append( mnFile(is_spCompletion_state_dependent,
+                        speciation_br115,
+                        speciation_br140
                         filename=outDirPath+outputPrefix+".RJ.log",
                         printgen=n_print_log) )
 
-# Monitor tree with speciation events
-monitors.append( mnFile(SpeciationBranchTreePoNames, 
+
+# Monitor tree with speciation events and branch lengths
+monitors.append( mnFile(SpeciationBranchTreePopNames, 
                         filename=outDirPath+outputPrefix+".EventsTree.log", 
                         printgen=n_print_tree) )
 
-# Monitor trait evolution
+monitors.append( mnFile(SpeciationBranchTreeBinary, 
+                        filename=outDirPath+outputPrefix+".EventsTreeBinary.log", 
+                        printgen=n_print_tree) )
+
+# Monitor trait evolution (I am saving this, but it needs some coding for summarizing the character history results that I do not know)
 monitors.append( mnFile( tree, filename=outDirPath+outputPrefix+".tre", 
                         printgen=n_print_tree) )
 
@@ -446,6 +362,7 @@ monitors.append(mnCharHistoryNewick(ctmc=trait_evol,
                                     printgen=n_print_tree ) )
 
 
+
 # Monitor tree with speciation completion branch rates
 monitors.append( mnExtNewick(
                  filename=outDirPath+outputPrefix+".SpCompletionRates.trees",
@@ -456,7 +373,7 @@ monitors.append( mnExtNewick(
                  state_branch_rate
                  ))
 
-# Monitor tree with branch speciation events
+# Monitor the original tree with branch lengths in time together with the number of speciation events associated with each branch.
 monitors.append( mnExtNewick(
                  filename=outDirPath+outputPrefix+".SpeciationEvents.trees",
                  isNodeParameter=TRUE,
@@ -466,10 +383,11 @@ monitors.append( mnExtNewick(
                  branch_speciation_events
                  ) )
 
-# monitor speciation events
+# Monitor only the speciation events on each branch (this can be used to check the posterior distribution of number of speciation events and guide species delimitation)
 monitors.append( mnFile(branch_speciation_events,
                         filename=outDirPath+outputPrefix+".SpeciationEvents.log",
                         printgen=n_print_log) )
+
 ```
 
 
@@ -477,8 +395,6 @@ Now we can create the MCMC object and run
 
 ```R
 mymcmc = mcmc(mymodel, monitors, moves, nruns=n_runs, combine="mixed")
-
-mymcmc.burnin(generations = burnin_percentage*n_gen, tuningInterval = burnin_percentage*n_gen*0.1)
 
 mymcmc.run(n_gen, checkpointFile=outDirPath+outputPrefix+".checkpoint", 
            checkpointInterval= n_check_interval )
@@ -488,35 +404,48 @@ mymcmc.run(n_gen, checkpointFile=outDirPath+outputPrefix+".checkpoint",
 We can now summarize the results
 
 ```R
-# Summarize tree with branch lengths in number of speciation events 
-treeTrace = readTreeTrace(outDirPath+outputPrefix+".EventsTree.log",
+# Summarize original tree with number of speciation events associated with each branch. This is used for species delimitation.
+treeTrace = readTreeTrace(outDirPath+outputPrefix+".SpeciationEvents.trees",
             burnin=burnin_percentage )
 mapTree(treeTrace,
-        file=outDirPath+outputPrefix+".EventsTree.MAP.tre",
-        ccAges=TRUE,
-        ccp=TRUE,
-        conditionalAges=TRUE,
-        mean=FALSE,
-        sampledAncestors=FALSE,
-        positiveBranchLengths=FALSE)
-
-# Summarize tree with info on number of speciation events
-treeTrace2 = readTreeTrace(outDirPath+outputPrefix+".SpeciationEvents.trees",
-            burnin=burnin_percentage )
-mapTree(treeTrace2,
         file=outDirPath+outputPrefix+".SpeciationEvents.MAP.tre",
         mean=FALSE
         )
-# The output needs some modification. We use a bash command to do it.
+# The output needs some modification. We use a bash command to do it. If you are using windows, you may need to modify it.
 system("sed -i 's/=1}/}/g' ../outputs/*.SpeciationEvents.MAP.tre")
 
 
 # Summarize tree with speciation completion rates
-treeTrace3 = readTreeTrace(outDirPath+outputPrefix+".SpCompletionRates.trees",
+treeTraceRates = readTreeTrace(outDirPath+outputPrefix+".SpCompletionRates.trees",
             burnin=burnin_percentage )
-mapTree(treeTrace3,
+mapTree(treeTraceRates,
         file=outDirPath+outputPrefix+".SpCompletionRates.MAP.tre")
 ```
+
+> You can also summarize the tree with branch lengths in number of speciation events. Note that the branch length would be the median (or mean if you choose) number of speciation events, and it might not be equal to the MAP number of events summarized above. You can also use this for guiding your conclusions about species limits. 
+>```R
+>treeTrace1 = readTreeTrace(outDirPath+outputPrefix+".EventsTree.log",
+>            burnin=burnin_percentage )
+>mapTree(treeTrace1,
+>        file=outDirPath+outputPrefix+".EventsTree.MAP.tre",
+>        ccAges=TRUE,
+>        ccp=TRUE,
+>        conditionalAges=TRUE,
+>        mean=FALSE,
+>        sampledAncestors=FALSE,
+>        positiveBranchLengths=FALSE)
+>
+>treeTraceBinary = readTreeTrace(outDirPath+outputPrefix+".EventsTreeBinary.log",
+>            burnin=burnin_percentage )
+>mapTree(treeTraceBinary,
+>        file=outDirPath+outputPrefix+".EventsTreeBinary.MAP.tre",
+>        ccAges=TRUE,
+>        ccp=TRUE,
+>        conditionalAges=TRUE,
+>        mean=FALSE,
+>        sampledAncestors=FALSE,
+>        positiveBranchLengths=FALSE)
+>```
 
 ## Plot results with RevGadgets
 
@@ -570,11 +499,11 @@ ggsave(SpCompletionRate,file=paste(outFigsDir, "traderpros.SpCompRates.tree.png"
 The the branch specific rates can be seen in the figure below.
 ![Tree with speciation completion rates](./outfigs/traderpros.SpCompRates.tree.png) 
 
-You can compare with the trait evolution estimated [here]().
+You can compare with the trait evolution estimated [here]() with the HiSSE model.
 ![Tree with trait evolution](./outfigs/AncEstTree.cond.MAP.png) 
   
 
-You can see the number of estimated speciation events on each branch.  
+You can see the number of estimated speciation events on each branch. This results is also the maximum a posteriori species delimitation, if you had populations with unknown species assignments. 
 
 ```R
 # Plot number of speciation events
@@ -595,7 +524,8 @@ sp_eventsTree <- plotTree(tree=eventsTree,
 
 ggsave(sp_eventsTree,file=paste(outFigsDir, "traderpros.SpEvents.tree.pdf", sep=""), width = 18, height = 24) 
 ```
-Branches connected by 0 speciation events belongs to the same species.
+
+Branches connected by 0 speciation events belongs to the same species. This is the most probable species limits.
 
 ![Tree with estimated number of speciation events](./outfigs/traderpros.SpEvents.tree.png) 
 
@@ -686,158 +616,6 @@ This is the reversible jump result testing the probability of speciation happeni
 
 You can do the same for the other branches
 ```R
-# Branch 116
-spEventProbBr116 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br116"));spEventProbBr116
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr116.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr116.posterior.png", sep=""))
-
-spEventProbBr116_table <- as.data.frame(spEventProbBr116[[1]]$data)
-spEventProbBr116_table$State <- replace(spEventProbBr116_table$State, spEventProbBr116_table$State == "0", "No Speciation")
-spEventProbBr116_table$State <- replace(spEventProbBr116_table$State, spEventProbBr116_table$State == "1", "Speciation")
-
-pie(spEventProbBr116_table$Probability, main = "Probability of speciation Branch 116", labels = paste(spEventProbBr116_table$State, " ", round(spEventProbBr116_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr116.png"))
-pie(spEventProbBr116_table$Probability, labels = paste(spEventProbBr116_table$State, " ", round(spEventProbBr116_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr116.pdf"))
-pie(spEventProbBr116_table$Probability, labels = paste(spEventProbBr116_table$State, " ", round(spEventProbBr116_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-# Branch 117
-spEventProbBr117 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br117"));spEventProbBr117
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr117.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr117.posterior.png", sep=""))
-
-spEventProbBr117_table <- as.data.frame(spEventProbBr117[[1]]$data)
-spEventProbBr117_table$State <- replace(spEventProbBr117_table$State, spEventProbBr117_table$State == "0", "No Speciation")
-spEventProbBr117_table$State <- replace(spEventProbBr117_table$State, spEventProbBr117_table$State == "1", "Speciation")
-
-pie(spEventProbBr117_table$Probability, main = "Probability of speciation Branch 117", labels = paste(spEventProbBr117_table$State, " ", round(spEventProbBr117_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr117.png"))
-pie(spEventProbBr117_table$Probability, labels = paste(spEventProbBr117_table$State, " ", round(spEventProbBr117_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr117.pdf"))
-pie(spEventProbBr117_table$Probability, labels = paste(spEventProbBr117_table$State, " ", round(spEventProbBr117_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-
-# Branch 118
-spEventProbBr118 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br118"));spEventProbBr118
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr118.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr118.posterior.png", sep=""))
-
-spEventProbBr118_table <- as.data.frame(spEventProbBr118[[1]]$data)
-spEventProbBr118_table$State <- replace(spEventProbBr118_table$State, spEventProbBr118_table$State == "0", "No Speciation")
-spEventProbBr118_table$State <- replace(spEventProbBr118_table$State, spEventProbBr118_table$State == "1", "Speciation")
-
-pie(spEventProbBr118_table$Probability, main = "Probability of speciation Branch 118", labels = paste(spEventProbBr118_table$State, " ", round(spEventProbBr118_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr118.png"))
-pie(spEventProbBr118_table$Probability, labels = paste(spEventProbBr118_table$State, " ", round(spEventProbBr118_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr118.pdf"))
-pie(spEventProbBr118_table$Probability, labels = paste(spEventProbBr118_table$State, " ", round(spEventProbBr118_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-
-# Branch 119
-spEventProbBr119 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br119"));spEventProbBr119
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr119.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr119.posterior.png", sep=""))
-
-spEventProbBr119_table <- as.data.frame(spEventProbBr119[[1]]$data)
-spEventProbBr119_table$State <- replace(spEventProbBr119_table$State, spEventProbBr119_table$State == "0", "No Speciation")
-spEventProbBr119_table$State <- replace(spEventProbBr119_table$State, spEventProbBr119_table$State == "1", "Speciation")
-
-pie(spEventProbBr119_table$Probability, main = "Probability of speciation Branch 119", labels = paste(spEventProbBr119_table$State, " ", round(spEventProbBr119_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr119.png"))
-pie(spEventProbBr119_table$Probability, labels = paste(spEventProbBr119_table$State, " ", round(spEventProbBr119_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr119.pdf"))
-pie(spEventProbBr119_table$Probability, labels = paste(spEventProbBr119_table$State, " ", round(spEventProbBr119_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-
-# Branch 127
-spEventProbBr127 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br127"));spEventProbBr127
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr127.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr127.posterior.png", sep=""))
-
-spEventProbBr127_table <- as.data.frame(spEventProbBr127[[1]]$data)
-spEventProbBr127_table$State <- replace(spEventProbBr127_table$State, spEventProbBr127_table$State == "0", "No Speciation")
-spEventProbBr127_table$State <- replace(spEventProbBr127_table$State, spEventProbBr127_table$State == "1", "Speciation")
-
-pie(spEventProbBr127_table$Probability, main = "Probability of speciation Branch 127", labels = paste(spEventProbBr127_table$State, " ", round(spEventProbBr127_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr127.png"))
-pie(spEventProbBr127_table$Probability, labels = paste(spEventProbBr127_table$State, " ", round(spEventProbBr127_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr127.pdf"))
-pie(spEventProbBr127_table$Probability, labels = paste(spEventProbBr127_table$State, " ", round(spEventProbBr127_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-
-# Branch 128
-spEventProbBr128 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br128"));spEventProbBr128
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr128.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr128.posterior.png", sep=""))
-
-spEventProbBr128_table <- as.data.frame(spEventProbBr128[[1]]$data)
-spEventProbBr128_table$State <- replace(spEventProbBr128_table$State, spEventProbBr128_table$State == "0", "No Speciation")
-spEventProbBr128_table$State <- replace(spEventProbBr128_table$State, spEventProbBr128_table$State == "1", "Speciation")
-
-pie(spEventProbBr128_table$Probability, main = "Probability of speciation Branch 128", labels = paste(spEventProbBr128_table$State, " ", round(spEventProbBr128_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr128.png"))
-pie(spEventProbBr128_table$Probability, labels = paste(spEventProbBr128_table$State, " ", round(spEventProbBr128_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr128.pdf"))
-pie(spEventProbBr128_table$Probability, labels = paste(spEventProbBr128_table$State, " ", round(spEventProbBr128_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-
-# Branch 129
-spEventProbBr129 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br129"));spEventProbBr129
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr129.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr129.posterior.png", sep=""))
-
-spEventProbBr129_table <- as.data.frame(spEventProbBr129[[1]]$data)
-spEventProbBr129_table$State <- replace(spEventProbBr129_table$State, spEventProbBr129_table$State == "0", "No Speciation")
-spEventProbBr129_table$State <- replace(spEventProbBr129_table$State, spEventProbBr129_table$State == "1", "Speciation")
-
-pie(spEventProbBr129_table$Probability, main = "Probability of speciation Branch 129", labels = paste(spEventProbBr129_table$State, " ", round(spEventProbBr129_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr129.png"))
-pie(spEventProbBr129_table$Probability, labels = paste(spEventProbBr129_table$State, " ", round(spEventProbBr129_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr129.pdf"))
-pie(spEventProbBr129_table$Probability, labels = paste(spEventProbBr129_table$State, " ", round(spEventProbBr129_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
 # Branch 140
 spEventProbBr140 <- plotTrace(trace = traceModel, 
                               vars = c("speciation_br140"));spEventProbBr140
@@ -858,92 +636,17 @@ dev.off()
 pdf(file=paste(outFigsDir, "traderpros.spEventProbBr140.pdf"))
 pie(spEventProbBr140_table$Probability, labels = paste(spEventProbBr140_table$State, " ", round(spEventProbBr140_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
 dev.off()
-
-
-# Branch 141
-spEventProbBr141 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br141"));spEventProbBr141
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr141.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr141.posterior.png", sep=""))
-
-spEventProbBr141_table <- as.data.frame(spEventProbBr141[[1]]$data)
-spEventProbBr141_table$State <- replace(spEventProbBr141_table$State, spEventProbBr141_table$State == "0", "No Speciation")
-spEventProbBr141_table$State <- replace(spEventProbBr141_table$State, spEventProbBr141_table$State == "1", "Speciation")
-
-pie(spEventProbBr141_table$Probability, main = "Probability of speciation Branch 141", labels = paste(spEventProbBr141_table$State, " ", round(spEventProbBr141_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr141.png"))
-pie(spEventProbBr141_table$Probability, labels = paste(spEventProbBr141_table$State, " ", round(spEventProbBr141_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr141.pdf"))
-pie(spEventProbBr141_table$Probability, labels = paste(spEventProbBr141_table$State, " ", round(spEventProbBr141_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-
-# Branch 142
-spEventProbBr142 <- plotTrace(trace = traceModel, 
-                              vars = c("speciation_br142"));spEventProbBr142
-
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr142.posterior.pdf", sep="")) 
-#ggsave(file=paste(outFigsDir, "traderpros.spEventProbBr142.posterior.png", sep=""))
-
-spEventProbBr142_table <- as.data.frame(spEventProbBr142[[1]]$data)
-spEventProbBr142_table$State <- replace(spEventProbBr142_table$State, spEventProbBr142_table$State == "0", "No Speciation")
-spEventProbBr142_table$State <- replace(spEventProbBr142_table$State, spEventProbBr142_table$State == "1", "Speciation")
-
-pie(spEventProbBr142_table$Probability, main = "Probability of speciation Branch 142", labels = paste(spEventProbBr142_table$State, " ", round(spEventProbBr142_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-
-png(file=paste(outFigsDir, "traderpros.spEventProbBr142.png"))
-pie(spEventProbBr142_table$Probability, labels = paste(spEventProbBr142_table$State, " ", round(spEventProbBr142_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
-
-pdf(file=paste(outFigsDir, "traderpros.spEventProbBr142.pdf"))
-pie(spEventProbBr142_table$Probability, labels = paste(spEventProbBr142_table$State, " ", round(spEventProbBr142_table$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
-dev.off()
 ```
 
-Othre possble plots below.
+Other possble plots below.
 ```R
 spEventPosteriorBr115 <- plotTrace(trace = traceModel, 
                               vars = c("branch_speciation_events[115]"));spEventPosteriorBr115
 
-spEventPosteriorBr116 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[116]"));spEventPosteriorBr116
-
-spEventPosteriorBr117 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[117]"));spEventPosteriorBr117
-
-spEventPosteriorBr118 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[118]"));spEventPosteriorBr118
-
-spEventPosteriorBr119 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[119]"));spEventPosteriorBr119
-
-spEventPosteriorBr127 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[127]"));spEventPosteriorBr127
-
-spEventPosteriorBr128 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[128]"));spEventPosteriorBr128
-
-spEventPosteriorBr129 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[129]"));spEventPosteriorBr129
-
-spEventPosteriorBr141 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[141]"));spEventPosteriorBr141
-
 spEventPosteriorBr140 <- plotTrace(trace = traceModel, 
                               vars = c("branch_speciation_events[140]"));spEventPosteriorBr140
-
-spEventPosteriorBr142 <- plotTrace(trace = traceModel, 
-                              vars = c("branch_speciation_events[142]"));spEventPosteriorBr140
-
 ```
-
-## Species delimitation tests
-
 
 
 # References
-[1]: https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008924 "Sukumaran J, Holder MT, Knowles LL (2021) Incorporating the speciation process into species delimitation. PLOS Computational Biology 17(5): e1008924" 
+Sukumaran J, Holder MT, Knowles LL (2021) Incorporating the speciation process into species delimitation. [PLOS Computational Biology 17(5): e1008924](ttps://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008924) 

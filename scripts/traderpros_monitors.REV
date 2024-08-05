@@ -40,7 +40,6 @@ monitors.append( mnFile(SpeciationBranchTreeBinary,
                         filename=outDirPath+outputPrefix+".EventsTreeBinary.log", 
                         printgen=n_print_tree) )
 
-
 # Monitor trait evolution
 monitors.append( mnFile( tree, filename=outDirPath+outputPrefix+".tre", 
                         printgen=n_print_tree) )

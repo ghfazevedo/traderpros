@@ -88,8 +88,8 @@ ggsave(file=paste(outFigsDir, "traderpros.StateSpecificRates.posterior.png", sep
 # Plot reversible jump hypotheses
 plotSPComplRJ <- plotTrace(trace = traceModel, 
                              vars = c("is_spCompletion_state_dependent"));plotSPComplRJ
-ggsave(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.posterior.pdf", sep="")) 
-ggsave(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.posterior.png", sep="")) 
+ggsave(file=paste(outFigsDir, "traderpros.RJSPCompStateDep.posterior.pdf", sep="")) 
+ggsave(file=paste(outFigsDir, "traderpros.RJSPCompStateDep.posterior.png", sep="")) 
 
 
 StateDependentProbability <- as.data.frame(plotSPComplRJ[[1]]$data)
@@ -97,11 +97,11 @@ StateDependentProbability$State <- replace(StateDependentProbability$State, Stat
 StateDependentProbability$State <- replace(StateDependentProbability$State, StateDependentProbability$State == "1", "Dependent")
 
 
-png(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.probability.png"))
+png(file=paste(outFigsDir, "traderpros.RJSPCompStateDep.probability.png"))
 pie(StateDependentProbability$Probability, labels = paste(StateDependentProbability$State, " ", round(StateDependentProbability$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
 dev.off()
 
-pdf(file=paste(outFigsDir, "traderpros.RJSPSompStateDep.probability.pdf"))
+pdf(file=paste(outFigsDir, "traderpros.RJSPCompStateDep.probability.pdf"))
 pie(StateDependentProbability$Probability, labels = paste(StateDependentProbability$State, " ", round(StateDependentProbability$Probability, 2), "%", sep=""),  border="white", col=c(colors[1],colors[11] ))
 dev.off()
 

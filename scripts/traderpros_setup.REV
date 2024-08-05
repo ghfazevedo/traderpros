@@ -21,6 +21,7 @@ outputPrefix = "traderpros"
 popMapPath = dataDirPath + "popmap.tsv"
 treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
 traitPath = dataDirPath + "CicTroglomorphism.nex"
+speciesDataPath=dataDirPath+"SpeciesMatrix.txt"
 
 # Set the fixed global and relativ trait satate transition
 global_trans_rate <-0.0331 # mean
@@ -28,15 +29,20 @@ global_trans_rate <-0.0331 # mean
 relative_transition <- v(0.8128, 0.1872) # mean
 #relative_transition <- simplex(1,0) # median
 
-# Or alternatively Set the rate of the exponential distribution parameter for the global trait transition rate prior
-#traRate_expoDistrib_parameter <- 10
+# set up the root prior
+#rf <- simplex(rep(1,n_states))
+rf <- simplex(0.6009,0.3991)
 
-# Set the rate for the exponential distribution prior for the speciation completion rate
+# Set the rate of the exponential distribution prior on the speciation completion rate
 spcompletion_expoDistParam <- 1
+
+# Indicate the max number of species in the tree
+max_number_of_species <- 26
+
 
 ### The MCMC settings
 # Number of generations
-n_gen = 1000000
+n_gen = 500000
 
 # Print to screen every x generations
 n_print_screen = 100
