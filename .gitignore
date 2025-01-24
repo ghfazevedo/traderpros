@@ -3,3 +3,13 @@
 *.checkpoint
 *.checkpoint
 /scripts/spDelimitation
+build/lib/traderpros/custom_R_functions/.Rhistory
+/build
+history.txt
+py_commands.txt
+Rplots.pdf
+src/traderpros_withSomeCommentsBackup.py
+TO_DO_LIST.txt
+/TestFIGS
+/Test
+/traderpros.egg-info
