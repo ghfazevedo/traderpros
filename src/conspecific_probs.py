@@ -98,8 +98,8 @@ def plot_heatmap(matrix, labels, out_dir, prefix, figsize=(40, 32), fontsize=10)
     plt.figure(figsize=figsize) 
     
     # Define minimum and maximum values for the log scale
-    log_min = math.log(0.5) #matrix.min() 
-    log_max = math.log(1)    #matrix.max()
+    log_min =  math.log(0.5) #matrix.min() 
+    log_max =  math.log(1)    #matrix.max()
 
     # Create the heatmap with the specified log scale limits
     ax = sns.heatmap(

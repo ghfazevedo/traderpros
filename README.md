@@ -16,7 +16,7 @@ To estimate the speciation completion rate, we used constraints informed by the 
   
 [sum_and_plot](./src/sum_and_plot.py) is a wrapper of [customized R functions](./src/custom_R_functions/) that uses [RevGadgets](), [coda]() and [ggplot2]() to summarize and plot posterior distribution of parameters and probability pie charts of the different models tested with Reversible Jump MCMC (e.g. if a irreversible model of trait is more likely; if there is association between traits and rates, etc...).  
   
-[conspecific_probs](./src/conspecific_probs.py) and [conspecific_binary](./src/conspecific_binary.py) are functions that use [DendroPy]() library for visualization of species delimitation results.  [conspecific_probs](./src/conspecific_probs.py) generates a heatmap with the probability of two tips (populations or individuals) be conspecific.  [conspecific_binary](./src/conspecific_binary.py) shows if two tips were estimated in the maximum *a posteriori* result as being conspecific or not.
+[conspecific_probs](./src/conspecific_probs.py) and [conspecific_binary](./src/conspecific_binary.py) are functions that use [DendroPy](https://jeetsukumaran.github.io/DendroPy) library for visualization of species delimitation results.  [conspecific_probs](./src/conspecific_probs.py) generates a heatmap with the probability of two tips (populations or individuals) be conspecific.  [conspecific_binary](./src/conspecific_binary.py) shows if two tips were estimated in the maximum *a posteriori* result as being conspecific or not.
   
 All these dependencies must be installed and accessible from command line (they should be added to your system $PATH variable). See [Installation instructions](#installation). If you use Traderpros, please cite those dependencies.
   
@@ -121,16 +121,16 @@ traderpros  -opre CicRun01 \
             -prsc 10 \
             -prlg 100 \
             -prtr 100 \
-            -chkp 10 \
+            -chkp 1000 \
             --char_move_intensity 0.75 \
-            -seed_number 
+            -seed_number 1399061603
 
 
 traderpros  -opre CicRun02 \
             -odir CicRun02 \
-            -t data/BPPConstraint.MCC.CAH.nex \
-            -trpt data/CicTroglomorphism.nex \
-            -spmt data/CicSpeciesMatrix.txt \
+            -t CicurinaData/BPPConstraint.MCC.CAH.nex \
+            -trpt CicurinaData/CicTroglomorphism.nex \
+            -spmt CicurinaData/CicSpeciesMatrix.txt \
             -tsph no \
             -npop 457 \
             -nhdd 2 \
@@ -140,15 +140,35 @@ traderpros  -opre CicRun02 \
             -prlg 100 \
             -prtr 100 \
             -chkp 1000 \
-			--char_move_intensity 0.75 \
-            -seed_number 
+            --char_move_intensity 0.75 \
+            -seed_number 1605601039
+
+sum_and_plot \
+     --out_dir CicRun01FIGS \
+     --in_dir  CicRun01 \
+     --prefix_used_in_traderpros  CicRun01 \
+     --burn  0.1 \
+     --out_images_format  "both" \
+     --path_to_custom_functions  src/custom_R_functions
+
+conspecific_binary \
+     -ant CicRun01/CicRun01.SpEvents.MAP.tre \
+     -od CicRun01SPLIMITS \
+     -pre CicRun01 \
+     -tax bullis_StoneO_StrLit,bullis_StoneO_UpCree,bullis_StoneO_GenCav,bullis_StoneO_Hilger,bullis_StoneO_BunHol,bullis_StoneO_RooCan,bullis_StoneO_281162,bullis_StoneO_ClasFea,bullis_StoneO_EagNes,bullis_StoneO_281167,bullis_StoneO_QuiCap,bullis_StoneO_HEB,neovespera_UTSA_CE2160,baroniaCF_StoneO_GreeMt,baroniaCF_StoneO_TusHei,baronia_AlamoH_OblPit,baronia_AlamoH_Robber
+
+conspecific_probs \
+     -pt CicRun01/CicRun01.Protracted.MAP.tre \
+     -od CicRun01SPLIMITS \
+     -pre CicRun01 \
+     -tax bullis_StoneO_StrLit,bullis_StoneO_UpCree,bullis_StoneO_GenCav,bullis_StoneO_Hilger,bullis_StoneO_BunHol,bullis_StoneO_RooCan,bullis_StoneO_281162,bullis_StoneO_ClasFea,bullis_StoneO_EagNes,bullis_StoneO_281167,bullis_StoneO_QuiCap,bullis_StoneO_HEB,neovespera_UTSA_CE2160,baroniaCF_StoneO_GreeMt,baroniaCF_StoneO_TusHei,baronia_AlamoH_OblPit,baronia_AlamoH_Robber
 ```
 
 ## What you need to run your data
 For running Traderpros you will need:  
-1. A dated tree (in nexus or newick format) with many populations of each species as tips, [like this one for example](./data/BPPConstraint.MCC.CAH.nex)
-2. A trait matrix in nexus format associating each tip with the state found in that population, [like this one](./data/CicTroglomorphism.nex). Note that for now, missing data are not accepted and may cause issues.
-3. A tab delimited file mapping each population to a species code, which are represented by natural numbers starting from 0. Every population belonging to the same species should have the same species code. See [this file for example](./data/CicSpeciesMatrix.txt)
+1. A dated tree (in nexus or newick format) with many populations of each species as tips, [like this one for example](./CicurinaData/BPPConstraint.MCC.CAH.nex)
+2. A trait matrix in nexus format associating each tip with the state found in that population, [like this one](./CicurinaData/CicTroglomorphism.nex). Note that for now, missing data are not accepted and may cause issues.
+3. A tab delimited file mapping each population to a species code, which are represented by natural numbers starting from 0. Every population belonging to the same species should have the same species code. See [this file for example](./CicurinaData/CicSpeciesMatrix.txt)
 4. You also should have a approximated idea of how many population probably exists in the clade (argument *-npop*). We acknowledge that this may be difficult, but we encourage to try different assumptions and see how it affects your conclusions. This should have an stronger effect on the estimative of Birth and Death parameters. If you think you have no good estimate and you think this can influence too much your results, you can try to modify the RevScript to run the analyses without the Birth and Death part of the model. 
 5. You should have and expected the maximum number of sampled species in your clade (argument *-mxsp*), if you have populations with unknown species assignments. If all populations are known to belong to a species, this is the number of sampled species.
 
