@@ -15,3 +15,9 @@ TO_DO_LIST.txt
 /traderpros.egg-info
 /CicRun02
 Rplots (1).pdf
+/simRates_0_29_0_29
+/simRates_0_305_0_275
+/simRates_0_435_0_145
+src/traderpros_simManyChanges.py
+src/traderprosHiSSE_sim_backup.py
+temporary_testCommands.sh

@@ -376,26 +376,155 @@ options:
 ```
 
 ##### Simulating data as in Azevedo et al.
+Use the commands below to simulate two sets of data, one with different speciation completion rates (state dependent) and another with equal rates.
+
 ```
 traderpros_sim \
-  -opre sim4  \
-  -odir dataSim4 \
-  -bo 2.239,4.314 \
-  -eo 0.341,0.324 \
-  -bh 0.331,1.669 \
-  -eh 0.743,1.257 \
-  -tr 0.247,0.00465 \
-  -ht 0.71,0.71 \
-  -rp 0.444,0.294,0.0924,0.17 \
-  -ra 10 \
-  -ps 0.27 \
-  -nt 124 \
-  -sc 0.7,0.5   \
-  -ns 5 \
+  -opre sim  \
+  -odir simRates_0_305_0_275 \
+  -phy CicurinaData/BPPConstraint.MCC.CAH.nex \
+  -tr 0.099134,0.099134 \
+  -rp 0.5,0.5 \
+  -sc 0.305,0.275 \
+  -ns 50 \
   -org \
   -unk 3
-```
 
+traderpros_sim \
+  -opre sim  \
+  -odir simRates_0_29_0_29 \
+  -phy CicurinaData/BPPConstraint.MCC.CAH.nex \
+  -tr 0.099134,0.099134 \
+  -rp 0.5,0.5 \
+  -sc 0.29,0.29 \
+  -ns 50 \
+  -org \
+  -unk 3
+
+traderpros_sim \
+  -opre sim  \
+  -odir simRates_0_435_0_145 \
+  -phy CicurinaData/BPPConstraint.MCC.CAH.nex \
+  -tr 0.099134,0.099134 \
+  -rp 0.5,0.5 \
+  -sc 0.435,0.145 \
+  -ns 50 \
+  -org \
+  -unk 3
+
+```
+The code below was used to run each simulated data from each simulated data folder.
+
+```
+cd projects/traderpros/traderpros/simRates_0_305_0_275/Sim1
+conda activate traderenv
+
+traderpros  -opre Sim \
+            -odir SimOut \
+            -t sim_Tree.Sim*.tre \
+            -trpt sim_trait.Sim*.nexus \
+            -spmt sim.SpeciesMatrixUnkn.Sim*.txt \
+            -tsph no \
+            -npop 457 \
+            -nhdd 2 \
+            -mxsp 25 \
+            -ngen 100000 \
+            -prsc 10 \
+            -prlg 100 \
+            -prtr 100 \
+            -chkp 1000 \
+            --char_move_intensity 0.75
+
+
+# Loop over folders to summarize results
+cd projects/traderpros/traderpros/simRates_0_305_0_275
+folders=$(ls -1)
+for i in $folders
+  do
+    sum_and_plot \
+         --out_dir $i/SimOutSum \
+         --in_dir  $i/SimOut \
+         --prefix_used_in_traderpros  Sim \
+         --burn  0.1 \
+         --out_images_format  "both" \
+         --path_to_custom_functions  /home/ghfa/projects/traderpros/traderpros/src/custom_R_functions
+done
+
+for i in $folders
+  do
+    conspecific_binary \
+         -ant $i/SimOut/Sim.SpEvents.MAP.tre \
+         -od  $i/SimOutSpLim \
+         -pre Sim
+done
+
+# Plot the true species limits matrix
+folders=$(ls -1)
+for i in $folders
+  do
+    conspecific_binary \
+         -brt $i/sim_TrBrLen.$i.tre \
+         -od  $i/SimTrueSpLim \
+         -pre SimTrueSpLim
+done
+
+
+
+
+# Other set of simulations
+cd projects/traderpros/traderpros/simRates_0_29_0_29
+conda activate traderenv
+
+traderpros  -opre Sim \
+            -odir SimOut \
+            -t sim_Tree.Sim*.tre \
+            -trpt sim_trait.Sim*.nexus \
+            -spmt sim.SpeciesMatrixUnkn.Sim*.txt \
+            -tsph no \
+            -npop 457 \
+            -nhdd 2 \
+            -mxsp 33 \
+            -ngen 100000 \
+            -prsc 10 \
+            -prlg 100 \
+            -prtr 100 \
+            -chkp 1000 \
+            --char_move_intensity 0.75
+
+folders=$(ls -1)
+for i in $folders
+  do
+    sum_and_plot \
+         --out_dir $i/SimOutSum \
+         --in_dir  $i/SimOut \
+         --prefix_used_in_traderpros  Sim \
+         --burn  0.1 \
+         --out_images_format  "both" \
+         --path_to_custom_functions  /home/ghfa/projects/traderpros/traderpros/src/custom_R_functions
+done
+
+for i in $folders
+  do
+    conspecific_binary \
+         -ant $i/SimOut/Sim.SpEvents.MAP.tre \
+         -od  $i/SimOutSpLim \
+         -pre Sim
+done
+
+
+# Plot the true species limits matrix
+folders=$(ls -1)
+for i in $folders
+  do
+    conspecific_binary \
+         -brt $i/sim_TrBrLen.$i.tre \
+         -od  $i/SimTrueSpLim \
+         -pre SimTrueSpLim
+done
+
+
+			
+``` 
 
 # References
 Sukumaran J, Holder MT, Knowles LL (2021) Incorporating the speciation process into species delimitation. [PLOS Computational Biology 17(5): e1008924](ttps://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008924) 

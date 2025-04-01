@@ -10,15 +10,23 @@ import glob
 def create_revscript(args):
     revscript = f"""
     # Parameters
-    tree_path = "{args.phylogeny}"
+    birth_observed = [{args.birth_observed}]
+    extinction_observed = [{args.extinction_observed}]
+    birth_hidden = [{args.birth_hidden}]
+    extinction_hidden = [{args.extinction_hidden}]
     transition_rates = [{args.transition_rates}]
+    hidden_trans = [{args.hidden_trans}]
     root_prior = simplex({args.root_probs})
+    root_age = {args.root_age}
+    popsampling_prob = {args.popsampling_prob}
+    n_tips = {args.n_tips}
     sp_completion_rates = [{args.sp_completion_rates}]
     outFolder = "{args.out_dir}/"
     outPrefix = "{args.out_prefix}"
     n_simulations = {args.n_simulations}
     seed_number = {args.seed_number}
     n_unknown_sp = {args.n_unknown_sp}
+    condition = "{args.simulate_condition}"
 
     # Begin RevScript for simulation
     if (seed_number!=0){{
@@ -27,14 +35,32 @@ def create_revscript(args):
     
     printSeed()
     
-    timetree <- readTrees(tree_path)[1]
-
     for (n in 1:n_simulations){{
         print("Simulation", n, "of", n_simulations, separator=" ")
-
+        # Put the two rates together
+        for (j in 1:birth_hidden.size()) {{
+            for (i in 1:birth_observed.size()) {{
+                index = i+(j*birth_hidden.size())-birth_hidden.size()
+                birth[index] := birth_observed[i] * birth_hidden[j]
+                extinction[index] := extinction_observed[i] * extinction_hidden[j]
+            }}
+        }}
+        
+        rate_matrix := fnHiddenStateRateMatrix(transition_rates, hidden_trans, rescaled=FALSE)
+        
+        timetree ~ dnCDBDP( rootAge = root_age,
+            speciationRates   = birth,
+            extinctionRates   = extinction,
+            Q                 = rate_matrix,
+            pi                = root_prior,
+            rho               = popsampling_prob,
+            simulateCondition = condition,
+            exactNumLineages  = n_tips
+             )
+        
         Q := fnFreeK(transition_rates, rescale=FALSE)
         
-        root_prior_observed_states := simplex(root_prior[1], root_prior[2])
+        root_prior_observed_states := simplex(root_prior[1] + root_prior[3], root_prior[2] + root_prior[4])
         
         trait_evol ~ dnPhyloCTMCDASiteIID(timetree,
                                           Q,
@@ -196,23 +222,30 @@ def organize(directory):
 
 def main():
     parser = argparse.ArgumentParser(description='Simulates data under the Traderpros model.')
-    parser.add_argument('-phy', '--phylogeny', type=str, help='Phylogenetic tree in nexus or newick.')
     parser.add_argument('-s', '--seed_number', type=int, default=0, help='Seed number for replication (default: 0).')
     parser.add_argument('-opre', '--out_prefix', type=str, default='Traderpros', help='Output file prefix (default: "Traderpros").')
     parser.add_argument('-odir', '--out_dir', type=str, default='trader_out', help='Output directory (default: "trader_out").')
+    parser.add_argument('-bo', '--birth_observed', type=str, required=True, help='A comma-separated list of state specific birth rates for observed states (mandatory).')
+    parser.add_argument('-eo', '--extinction_observed', type=str, required=True, help='A comma-separated list of state specific death rates for observed states (mandatory).')
+    parser.add_argument('-bh', '--birth_hidden', type=str, required=True, help='A comma-separated list of state specific birth rates for hidden states. The mean of rates must be 1. If you wish a model with no hidden rates, chose 1,1 (mandatory).')
+    parser.add_argument('-eh', '--extinction_hidden', type=str, required=True, help='A comma-separated list of state specific death rates for hidden states. The mean of rates must be 1. If you wish a model with no hidden rates, chose 1,1 (mandatory).')
     parser.add_argument('-tr', '--transition_rates', type=str, required=True, help='A comma-separated list of transition rates between observed states. It should be absolute rates. First value represents transition from 0 to 1 and second value should be the 1 to 0 transition (mandatory).')
+    parser.add_argument('-ht', '--hidden_trans', type=str, required=True, help='A comma-separated list of transition rates between hidden states. It should be absolute rates. First value represents transition from A to B and second value should be the B to 1 transition (mandatory).')
     parser.add_argument('-rp', '--root_probs', type=str, required=True, help='A comma-separated list of probabilities for the all 4 root states (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1 Hidden B).  It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0 (mandatory).')
+    parser.add_argument('-ra', '--root_age', type=float, required=True, help='The age of the root of the tree (mandatory).')
+    parser.add_argument('-ps', '--popsampling_prob', type=float, default=1.0, help='Probability of sampling a population (default: 1.0).')
+    parser.add_argument('-nt', '--n_tips', type=int, required=True, help='The number of tips in the final tree (mandatory).')
     parser.add_argument('-sc', '--sp_completion_rates', type=str, required=True, help='A comma-separated list of state specific speciation completion rates for observed states (mandatory).')
     parser.add_argument('-ns', '--n_simulations', type=float, default=1, help='The number of simulations (default: 1).')
     parser.add_argument('-justscript', '--just_script', action="store_true", help='Create script only, do not run (default: False).')
     parser.add_argument("-org", "--organize_folder", action="store_true", help='Organize files into folders by simulation. (default: False)')
     parser.add_argument("-unk", "--n_unknown_sp",  type=int, default=0, help='Number of tips to be set as "unknown" species assignment in the Species Matrix file for testing application of the model for species delimitation (default: 0)')
+    parser.add_argument("-con", "--simulate_condition",  type=str, default="startTime", help='Condition to simulate: "startTime" or "numTips" (default: "startTime")')
 
     args = parser.parse_args()
 
     # Convert out_dir to absolute path
     args.out_dir = os.path.abspath(args.out_dir)
-    args.phylogeny = os.path.abspath(args.phylogeny)
 
     # Create the revscript with parameters
     revscript = create_revscript(args)

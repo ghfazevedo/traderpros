@@ -49,7 +49,7 @@ if not check_r_packages():
 
 setup(
     name="traderpros",
-    version="0.1.0",
+    version="0.9.20250401",
     author="Guilherme Azevedo",
     description="A CLI tool for generating RevBayes scripts and run a Trait Dependend Rates Protracted Speciation",
     long_description=open("README.md").read(),
@@ -70,7 +70,8 @@ setup(
             'conspecific_binary=traderpros.conspecific_binary:main',
             'conspecific_probs=traderpros.conspecific_probs:main',
             'sum_and_plot=traderpros.sum_and_plot:main',
-            'traderpros_sim=traderpros.traderpros_sim:main'
+            'traderpros_sim=traderpros.traderpros_sim:main',
+            'traderprosHiSSE_sim=traderpros.traderprosHiSSE_sim:main'
         ]
     },
     classifiers=[
