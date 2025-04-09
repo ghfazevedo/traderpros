@@ -21,3 +21,6 @@ Rplots (1).pdf
 src/traderpros_simManyChanges.py
 src/traderprosHiSSE_sim_backup.py
 temporary_testCommands.sh
+/dist
+/simRates_0.305_0.275
+src/traderpros_withDistanceNotWorking.py

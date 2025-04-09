@@ -95,7 +95,14 @@ def create_revscript(args):
                 }}
             }}
         }}
-            
+
+        # Create a file with the number of species
+        n_species <- groups.size()
+        write(n_species,
+              filename=outFolder + outPrefix + "." + n_species + ".spp.Sim" + n + ".txt",
+              append=FALSE)
+
+        # Create a species matrix file 
         write("taxon",
               "species_code" + "\\n",
               filename=outFolder + outPrefix + ".SpeciesMatrix.Sim" + n + ".txt",
@@ -104,7 +111,7 @@ def create_revscript(args):
         for (i in 1:groups.size()) {{
             for (j in 1:groups[i].size()){{
             write(groups[i][j],
-                  i,
+                  i-1,
                   "\\n",
                   filename=outFolder + outPrefix + ".SpeciesMatrix.Sim" + n + ".txt",
                   append=TRUE)

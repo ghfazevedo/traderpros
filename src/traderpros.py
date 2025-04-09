@@ -59,7 +59,7 @@ def create_revscript(args):
     SPECIATION_PRIOR_PARAM  <-  {args.speciation_prior_param}  
     
     # Indicate the max number of possible species in the tree (do not considered unsampled species)
-    #MAX_NUM_SPECIES <-  args.max_num_species
+    MAX_NUM_SPECIES <-  {args.max_num_species}
     
     # Chose the intensity of the moves on the augmented data history.
     # It should be a number between 0 and 1. Small numbers move trait history in fewer branches and are faster, but migh be less efficient.
@@ -136,7 +136,7 @@ def create_revscript(args):
     # We read the same file as a matrix and as a chracacter data for using in different part of the script.
     
     popMap = readDataDelimitedFile(SP_MATRIX, header=TRUE)
-    #speciesData = readDelimitedCharacterData(file= SP_MATRIX , stateLabels=MAX_NUM_SPECIES )
+    speciesData = readDelimitedCharacterData(file= SP_MATRIX , stateLabels=MAX_NUM_SPECIES )
     
     #######################################
     # This is the HiSSE part of the model #
@@ -338,7 +338,7 @@ def create_revscript(args):
         state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
     }}
     
-    # Now it comes the tricky part, that is the Trait Dependent Rates Protracted Speciation Tree
+    # Now it comes the trick part, that is the Trait Dependent Rates Protracted Speciation Tree
     TreeSpeciesTip <- tree
     for (i in 1:popMap.size()){{
         TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
@@ -392,8 +392,13 @@ def create_revscript(args):
         }}
     }}
     
-
+    # Protracted likelihood
+    for (i in 1:branch_speciation_events.size()){{
+        br_lnLikelihood[i] := branch_speciation_events[i].lnProbability()
+    }}
+    tree_protracted_lnLikelihood := sum(br_lnLikelihood)
     
+
     # Track if speciation happened or not and the probability of speciation happening or not
     for (i in 1:(n_branches)){{
         speciation_binary[i] := ifelse(branch_speciation_events[i] == 0, 0, 1)
@@ -420,49 +425,15 @@ def create_revscript(args):
     
     # The code below is used to constrain the search of speciation branch trees that are compatible with our observed species. 
     # For this we use a matrix which trait states indicate the species assignments, and populations with unknown identity are coded with "?"
-     
-     representative_pop <- [popMap[1][1]]
-     species <- [popMap[1][2]]
-     
-     for (i in 2:popMap.size()){{
-        if ( popMap[i][2] != "?"){{
-            if ( !species.contains(popMap[i][2])) {{
-              representative_pop.append(popMap[i][1])
-              species.append(popMap[i][2])
-            }}
-        }} 
-     }}
-
-    print("Setting up speciation history constraints. This can take a few minutes ...")
-
-    distanceMatrix := fnTreePairwiseDistances(SpeciationBranchTreePopNames)
     
-    m=1
-    for (i in 1:(distanceMatrix.size()-1)){{
-        for (j in (i+1):distanceMatrix.size()){{
-          if ( representative_pop.contains(distanceMatrix.names()[i]) & representative_pop.contains(distanceMatrix.names()[j]) ){{
-            constrainedDist[m] := distanceMatrix.matrix()[i][j]
-            m=m+1
-          }}
-        }}
-    }}
-
-    # Protracted tree likelihood
-    for (i in 1:branch_speciation_events.size()){{
-        br_lnLikelihood[i] := branch_speciation_events[i].lnProbability()
-    }}
-    tree_protracted_lnLikelihood := sum(br_lnLikelihood)
+    Qs <- fnFreeK(rep(1, MAX_NUM_SPECIES^2), rescale=FALSE)
     
-    # Create a deterministic node where 0 represent a speciation history that violates the species assignments (i.e. no speciation between different species)
-    constraint_violation := ifelse(constrainedDist.contains(0), 1, 0)
+    speciation ~ dnPhyloCTMC(tree=SpeciationBranchTreePopNames, Q=Qs, type="NaturalNumbers")
     
-    # Create a sthochastic node that sets probability to 0 if there is a constraint violation
-    constraint_dist ~ dnUniform(constraint_violation-exp(tree_protracted_lnLikelihood), constraint_violation+exp(tree_protracted_lnLikelihood))
-    constraint_dist.clamp(0)
-
-    # Wrap the model
+    speciation.clamp(speciesData)
+    
     mymodel = model(branch_speciation_events)
-
+    
     ############
     # Monitors #
     ############
@@ -519,14 +490,20 @@ def create_revscript(args):
                                                       withStartStates = FALSE,
                                                       filename = OUT_DIR + OUT_PREFIX + ".traits.log") )
     
-    # Monitor tree with branch speciation events
-    #monitors.append( mnExtNewick(
-    #                 filename = OUT_DIR + OUT_PREFIX + ".SpEvents.trees",
-    #                 isNodeParameter=TRUE,
-    #                 printgen=N_PRINT_TREE,
-    #                 separator=TAB,
-    #                 tree=tree, 
-    #                 branch_speciation_events ) )
+    ##########################################################################
+    # Monitor tree with branch speciation events                             #
+    # This in the box does not work properly when the tree is summarized.    #
+    # I think it is because the object is a container of integers,           #
+    # so it is processed as discrete states.                                 #
+    # We used other way below, monitorin a trace with the speciation events. #
+    #monitors.append( mnExtNewick(                                           #
+    #                 filename = OUT_DIR + OUT_PREFIX + ".SpEvents.trees",   #
+    #                 isNodeParameter=TRUE,                                  #
+    #                 printgen=N_PRINT_TREE,                                 #
+    #                 separator=TAB,                                         #
+    #                 tree=tree,                                             #
+    #                 branch_speciation_events ) )                           #
+    ##########################################################################
 
     # Monitor trace speciation events on each branch (container called "end_")
     monitors.append( mnFile(end,
@@ -563,10 +540,25 @@ def create_revscript(args):
     ###################
     # Process Results #
     ###################
-    # Summarize tree with number of speciation events
-    #treeTrace_spevents = readTreeTrace(OUT_DIR + OUT_PREFIX + ".SpEvents.trees",
-    #                                burnin= BURN_IN )
-    
+
+    # Summarize tree with number of speciation events.
+
+    ##################################################################################
+    ## This code in this box does not work well.                                     #
+    ## I think it is because it understands the annotation as discrete states.       #
+    #treeTrace_spevents = readTreeTrace(OUT_DIR + OUT_PREFIX + ".SpEvents.trees",    #
+    #                                burnin= BURN_IN )                               #
+    #mapTree(treeTrace_spevents,                                                     #
+    #        file = OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre",                      #
+    #        mean = FALSE                                                            #
+    #        )                                                                       #
+    ## The output needs some modification. We use a bash command to do it.           #
+    #command = "sed -i 's/=1}}/}}/g' " + OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre"  #
+    #system(command)                                                                 #
+    ##################################################################################
+
+    # To properly summarized tree with number of speciation events we need to modify the file for processing.
+    # We used bash commands and call them within revbayes with the function system()
     # First remove the [] from the file so it can be processed prperly.
     command1 = "tr '[' '_' < " + OUT_DIR + OUT_PREFIX + ".SpEvents.log" + " > " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP.log"
     system(command1)
@@ -577,7 +569,7 @@ def create_revscript(args):
     command4 =  "rm " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP*.log"
     system(command4)
 
-    # Read the trace
+    # Now we can read the trace and process it.
     sp_events_trace = readAncestralStateTrace(OUT_DIR + OUT_PREFIX + ".SpEvents.log")
     
     ancestralStateTree(tree=tree,
@@ -589,18 +581,9 @@ def create_revscript(args):
                        nStates=1,
                        burnin= BURN_IN)
     
-    # Edit the tree output annotation name
+    # Edit the tree output annotation name so we know what it is about.
     command1 = "sed -i 's/anc_state_1/branch_speciation_events/g' " + OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre"
     system(command1)
-
-    #mapTree(treeTrace_spevents,
-    #        file = OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre",
-    #        mean = FALSE
-    #        )
-
-    ## The output needs some modification. We use a bash command to do it.
-    #command = "sed -i 's/=1}}/}}/g' " + OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre"
-    #system(command)
 
     # Summarize protracted tree with branch rates and speciation probabilities
     treeTrace_sprates = readTreeTrace(OUT_DIR + OUT_PREFIX + ".Protracted.trees",
@@ -680,7 +663,7 @@ def main():
     parser.add_argument('-btpr', '--birth_prior_param', type=float, default=1, help='Birth prior parameter (default: 1).')
     parser.add_argument('-dtpr', '--death_prior_param', type=float, default=1, help='Death prior parameter (default: 1).')
     parser.add_argument('-sppr', '--speciation_prior_param', type=float, default=1, help='Speciation prior parameter (default: 1).')
-    #parser.add_argument('-mxsp', '--max_num_species', type=int, required=True, help='Max number of species (mandatory).')
+    parser.add_argument('-mxsp', '--max_num_species', type=int, required=True, help='Max number of species (mandatory).')
     parser.add_argument('-mvit', '--char_move_intensity', type=float, default=0.5, help='Character move intensity (default: 0.5).')
     parser.add_argument('-ngen', '--n_gen', type=int, default=10000, help='Number of generations (default: 10000).')
     parser.add_argument('-prsc', '--print_screen', type=int, default=  100, help='Print screen interval (default: 100).')
