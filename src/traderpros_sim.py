@@ -73,7 +73,7 @@ def create_revscript(args):
         }}
     
         # Loop through each tip and assign groups based on distance of 0
-        for (i in 1:(num_tips-1)) {{
+        for (i in 1:(num_tips)) {{
             # Only assign a new group if the tip has not been assigned yet
             if (visited[i] == -1) {{
                 # Assign a new group
@@ -81,8 +81,8 @@ def create_revscript(args):
                 visited[i] <- 1
                 
                 # Find all tips with distance 0 to the current tip and assign the same group
-                for (j in (i+1):num_tips) {{
-                    if (distanceMatrix.matrix()[i][j] == 0) {{
+                for (j in 1:num_tips) {{
+                    if (j > i && distanceMatrix.matrix()[i][j] == 0) {{
                         group.append(distanceMatrix.names()[j])
                         visited[j] <- 1
                     }}

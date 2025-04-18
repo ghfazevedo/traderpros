@@ -381,7 +381,7 @@ Use the commands below to simulate two sets of data, one with different speciati
 ```
 traderpros_sim \
   -opre sim  \
-  -odir simRates_0_305_0_275 \
+  -odir simRates_0.305_0.275 \
   -phy CicurinaData/BPPConstraint.MCC.CAH.nex \
   -tr 0.099134,0.099134 \
   -rp 0.5,0.5 \
@@ -392,7 +392,7 @@ traderpros_sim \
 
 traderpros_sim \
   -opre sim  \
-  -odir simRates_0_29_0_29 \
+  -odir simRates_0.29_0.29 \
   -phy CicurinaData/BPPConstraint.MCC.CAH.nex \
   -tr 0.099134,0.099134 \
   -rp 0.5,0.5 \
@@ -416,8 +416,9 @@ traderpros_sim \
 The code below was used to run each simulated data from each simulated data folder.
 
 ```
-cd projects/traderpros/traderpros/simRates_0_305_0_275/Sim1
-conda activate traderenv
+cd projects/traderpros/traderpros/simRates_0_305_0_275/Sim*
+number_species=$(head -n 1 sim.*.spp.Sim*.txt)
+
 
 traderpros  -opre Sim \
             -odir SimOut \
@@ -427,7 +428,7 @@ traderpros  -opre Sim \
             -tsph no \
             -npop 457 \
             -nhdd 2 \
-            -mxsp 25 \
+            -mxsp $number_species \
             -ngen 100000 \
             -prsc 10 \
             -prlg 100 \
