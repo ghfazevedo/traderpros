@@ -36,17 +36,17 @@ sum_and_plot_traderpros_result <- function(out_dir = "./outputstrader",
                                            in_dir,
                                            prefix_used_in_traderpros,
                                            burn = 0.1,
-                                           color_completion = c("#A6CEE3", "#1F78B4"),
-                                           color_n_speciation = c("#BDBDBD", "#000000"),
-                                           color_birth = c("#DADAEB", "#3F007D"),
-                                           color_death = c("#FB9A99", "#E31A1C"),
-                                           color_net = c("#FFFF99", "#B15928"),
-                                           color_transition = c("#FDBF6F","#FF7F00"),
+                                           color_completion = c("#2166AC", "#B2182B"),
+                                           color_n_speciation = c("#2166AC", "#B2182B"),
+                                           color_birth = c("#2166AC", "#B2182B"),
+                                           color_death = c("#2166AC", "#B2182B"),
+                                           color_net = c("#2166AC", "#B2182B"),
+                                           color_transition = c("#E08214", "#2D004B"),
                                            anc_state_labels = c("State 0 Hidden A",
                                                                 "State 1 Hidden A",
                                                                 "State 0 Hidden B",
                                                                 "State 1 Hidden B"),
-                                           anc_state_colors = c("#D73027","#A50026","#4575B4", "#313695"),
+                                           anc_state_colors = c("#542788", "#2D004B", "#FDB863", "#E08214"),
                                            path_to_custom_functions = "./",
                                            out_images_format = "both") {
 
@@ -241,9 +241,15 @@ sum_and_plot_traderpros_result <- function(out_dir = "./outputstrader",
 
   names_to_save <- c("birth_obs", "extinction_obs", "Sp_completion",
                      "State_Transition", "Birth_Hiden", "Extinction_Hidden")
-
-  colors_to_use <- cbind(color_birth, color_death, color_completion, 
-                         color_transition, color_birth,color_death   )
+c(anc_state_colors[2],anc_state_colors[4])
+  
+  colors_to_use <- cbind(c(anc_state_colors[2],anc_state_colors[4]), c(anc_state_colors[2],anc_state_colors[4]),
+                         c(anc_state_colors[2],anc_state_colors[4]), 
+                         color_transition, 
+                         c(anc_state_colors[1],anc_state_colors[3]),
+                         c(anc_state_colors[2],anc_state_colors[4]))
+  #colors_to_use <- cbind(color_birth, color_death, color_completion, 
+  #                      color_transition, color_birth,color_death   )
 
   for (i in 1:length(match_strings)) {
     custom_plot_trace(trace_object = traceModel,

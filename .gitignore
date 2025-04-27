@@ -24,3 +24,8 @@ temporary_testCommands.sh
 /dist
 /simRates_0.305_0.275
 src/traderpros_withDistanceNotWorking.py
+/CicRun01FIGSAltVer
+/CicRun01FIGSAltVer2
+/CicRun01FIGSAltVer3
+/CicRun01FIGSFinalColors
+src/custom_R_functions/alternativecolors.sh
