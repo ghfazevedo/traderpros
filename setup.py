@@ -51,7 +51,7 @@ setup(
     name="traderpros",
     version="0.9.20250427",
     author="Guilherme Azevedo",
-    description="A CLI tool for generating RevBayes scripts and run a Trait Dependend Rates Protracted Speciation",
+    description="A CLI tool for generating RevBayes scripts and run a Trait Dependent Rates Protracted Speciation",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/ghfazevedo/traderpros",

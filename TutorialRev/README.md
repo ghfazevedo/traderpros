@@ -1,38 +1,41 @@
 # <ins>Tra</ins>it <ins>De</ins>pendent <ins>R</ins>ates <ins>Pro</ins>tracted <ins>S</ins>peciation (TraDeRProS)
 
 ## Introduction
+The protracted speciation model was first proposed by Rosindell et al. (2010) and have been further developed and used for understand diversification and for species delimitation. Our approach consist of modeling the population tree branching pattern as a SSE model and the number of speciation completion events on the brach as extended Poisson process similar to the one used in [DELINEATE](https://jeetsukumaran.github.io/delineate/) (Sukumaran et al. 2021). The difference is that the speciation completion rate in each branch will vary according to the state in that branch instead of a single global rate. That is, ```N_speciation_events_branch[i] ~ Poisson(state_branch_rate[i]*branch_length[i])``` where *i* is the branch in the tree, and *state_branch_rate[i]* is the rate accounting for the time spent in each trait state in the branch *i*. To sample the trait history evolution along the tree and obtain the the time spent in each states on a branch, we use a data augmentation approach in similar way that is done for continuous trait evolution by [May and Moore (2020)][^4] (see also [RevBayes tutorial on data augmentation](https://revbayes.github.io/tutorials/cont_traits/state_dependent_bm.html)). For the Birth and Death process, we decided to use a Binary State Dependent Speciation and Extinction with hidden rates (HiSSE) because it has been shown to improve parameter estimation, including the trait transition rates which are important for the trait history data augmentation. However, any kind of Birth and Death process can be use. Although the Python wrapper program we developed here only implements HiSSE, you can modify the RevBayes script to adapt it to your data needs. 
+  
+> [!Note]
+>>It is important notice also that our current implementation does not include Hidden states for the protracted part of the model. We stress that that could be a further development and that tests regarding the power and identifiability of the model should be performed. Our preliminary exploration suggested that the use of four states with our tree were not able to inform the model and the posterior was identical to the prior, and bigger tress with may be necessary for accurate infer parameters when a hidden (or more than 2 observed states) are used.  
+
+To estimate the speciation completion rate, we used constraints informed by the population to species map (species matrix file). We know that speciation completion did not happened on branches that connect populations, so we can clamp the number of speciation events to 0. If the branches connects populations of two different species, at least one speciation event must have happened along the path connecting these two heterospecific populations. Branches that connect populations with unknown status or that connects more than two species are not used as constraints and the posterior distribution of the number of speciation completion events on those branches are estimate. Therefore, a population tree with many populations per species must be used. Some population with unknown identity status can be used and the results of the probability of speciation on the branches connection these populations to others can be used for species delimitation (see below).  
+
+![Augmented Tree GIF](../misc/DataAugmentation.gif)
+![Model](../misc/Model.png)
 
 ## TraDeRProS in RevBayes
 
 ### Getting started  
 
-Clone this directory, start RevBayes from your [scripts](./scripts) directory. 
 
-```R
-git clone LINK
 
-cd traderpros/scripts
+Seed number to replicate. If you want a random seed set seed_number=0
+```
+SEED_NUMBER =  0
+```
+Set the directories and base names for outputs and inputs
 
-rb 
+```
+OUT_PREFIX   = "exmp_out"
+OUT_DIR      = "traderpros/exmp_out" + "/"
+TREE_PATH    =  "traderpros/example_dataexample.tre"
+TRAIT_PATH   =  "example_dataexample_trait.nexus"
+SP_MATRIX    =   "/mnt/c/Gui/projects/traderpros/traderpros/example_dataexample.SpeciesMatrix.txt"
 ```
 
-Set seed if you want to replicate the analysis.
-```R
-seed(1)
-```  
-
-Set the path to inputs and outputs  
-
-```R
-workDirPath = "../"
-dataDirPath = workDirPath + "data/"
-outDirPath = workDirPath + "outputs/"
-outputPrefix = "traderpros"
-popMapPath = dataDirPath + "popmap.tsv"
-treePath = dataDirPath + "BPPConstraint.MCC.CAH.nex"
-traitPath = dataDirPath + "CicTroglomorphism.nex"
-speciesDataPath=dataDirPath+"SpeciesMatrix.txt"
-```
+# Do you want to use Tensor phylo? Sometimes analysys freeze when usingit. Not sure why.
+USE_TENSOR =  "no"
+# TensorPhylo path if TRUE
+TENSOR_PATH  =  "None"
+    
 
 Create helpers variables vor the moves and monitors.
 ```R

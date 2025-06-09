@@ -1,29 +1,33 @@
 # <ins>Tra</ins>it <ins>De</ins>pendent <ins>R</ins>ates <ins>Pro</ins>tracted <ins>S</ins>peciation (Traderpros)
 
-## Introduction
-Traderpros is a package of python programs to estimate parameters, delimit species and simulate data under the Trait Dependent Rates Protracted Speciation model in a Bayesian framework as proposed in [Azevedo et al. (2024)](). There are also programs to summarize results and plot graphs. Traderpros programs allow users to simply run the model and check results using unix command line interface.  
+Traderpros is a package of python programs to estimate parameters, delimit species and simulate data under the Trait Dependent Rates Protracted Speciation model in a Bayesian framework as proposed in Azevedo et al. (in prep) . There are also programs to summarize results and plot graphs. Traderpros programs allow users to simply run the model and check results using unix command line interface.  
 
+## The Traderpros Model
+The protracted speciation model was first proposed by Rosindell et al. (2010) and have been further developed and used for understand diversification and for species delimitation. Our approach consist of modeling the population tree branching pattern as a SSE model and the number of speciation completion events on the brach as extended Poisson process similar to the one used in [DELINEATE](https://jeetsukumaran.github.io/delineate/) (Sukumaran et al. 2021). The difference is that the speciation completion rate in each branch will vary according to the state in that branch instead of a single global rate. That is, ```N_speciation_events_branch[i] ~ Poisson(state_branch_rate[i]*branch_length[i])``` where *i* is the branch in the tree, and *state_branch_rate[i]* is the rate accounting for the time spent in each trait state in the branch *i*. To sample the trait history evolution along the tree and obtain the the time spent in each states on a branch, we use a data augmentation approach in similar way that is done for continuous trait evolution by [May and Moore (2020)][^4] (see also [RevBayes tutorial on data augmentation](https://revbayes.github.io/tutorials/cont_traits/state_dependent_bm.html)). For the Birth and Death process, we decided to use a Binary State Dependent Speciation and Extinction with hidden rates (HiSSE) because it has been shown to improve parameter estimation, including the trait transition rates which are important for the trait history data augmentation. However, any kind of Birth and Death process can be use. Although the Python wrapper program we developed here only implements HiSSE, you can modify the RevBayes script to adapt it to your data needs. 
+  
+> [!Note]
+>>It is important notice also that our current implementation does not include Hidden states for the protracted part of the model. We stress that that could be a further development and that tests regarding the power and identifiability of the model should be performed. Our preliminary exploration suggested that the use of four states with our tree were not able to inform the model and the posterior was identical to the prior, and bigger tress with may be necessary for accurate infer parameters when a hidden (or more than 2 observed states) are used.  
 
-### The Traderpros Model
-The protracted speciation model was first proposed by [REF]() and have been further developed ([REF]()) and used for understand diversification and for species delimitation ([REF]()). Our approach consist of modeling the population tree branching pattern as a Birth and Death model (or any derivatives) and the number of speciation completion events on the brach as extended Poisson process similar to the one used in [DELINEATE](https://jeetsukumaran.github.io/delineate/) ([Sukumaran et al. 2021][1]). The difference is that the speciation completion rate in each branch will vary according to the state in that branch instead of a single global rate. That is, ```N_speciation_events_branch[i] ~ Poisson(state_branch_rate[i]*branch_length[i])``` where *i* is the branch in the tree, and *state_branch_rate[i]* is the rate accounting for the time spent in each trait state in the branch *i*. To sample the trait history evolution along the tree and obtain the the time spent in each states on a branch, we use a data augmentation approach in similar way that is done for continuous trait evolution by [May and Moore (2020)](https://doi.org/10.1093/sysbio/syz069)  (see also [RevBayes tutorial on data augmentation](https://revbayes.github.io/tutorials/cont_traits/state_dependent_bm.html)). For the Birth and Death process, we decided to use a Binary State Dependent Speciation and Extinction with hidden rates (HiSSE) because it has been shown to improve parameter estimation, including the trait transition rates which are important for the trait history data augmentation. However, any kind of Birth and Death process can be use [SSE models examples](). Although the python wrapper program we developed only implements HiSSE, you can modify the RevBayes script to adapt it to your data needs. It is important notice also that our current implementation does not include Hidden states for the protracted part of the model. We stress that that could be a further development and that tests regarding the power and identifiability of the model should be performed. Our preliminary exploration suggested that the use of four states with our tree were not able to inform the model and the posterior was identical to the prior, and bigger tress with may be necessary for accurate infer parameters when a hidden (or more than 2 observed states) are used.  
+To estimate the speciation completion rate, we used constraints informed by the population to species map (species matrix file). We know that speciation completion did not happened on branches that connect populations, so we can clamp the number of speciation events to 0. If the branches connects populations of two different species, at least one speciation event must have happened along the path connecting these two heterospecific populations. Branches that connect populations with unknown status or that connects more than two species are not used as constraints and the posterior distribution of the number of speciation completion events on those branches are estimate. Therefore, a population tree with many populations per species must be used. Some population with unknown identity status can be used and the results of the probability of speciation on the branches connection these populations to others can be used for species delimitation (see below).  
 
-To estimate the speciation completion rate, we used constraints informed by the population to species map (species matrix file). We know that speciation completion did not happened on branches that connect populations, so we can clamp the number of speciation events to 0. If the branches connects populations of two different species, at least one speciation event must have happened along the path connecting these two heterospecific populations. Branches that connect populations with unknown status or that connects more than two species are not used as constraints and the posterior distribution of the number of speciation completion events on those branches are estimate ([FIGURES]()). Therefore, a population tree with many populations per species must be used. Some population with unknown identity status can be used and the results of the probability of speciation on the branches connection these populations to others can be used for species delimitation (see below).  More detailed explanation of the algorithm can be seen at the [RevBayes script Tutorial](./TutorialRev).
+![Augmented Tree GIF](misc/DataAugmentation.gif)
+![Model](misc/Model.png)
+  
 
->Note that our package is limited to the model priors and parameters provided in [Azevedo et al. (2024)](). We strongly recommend you to check the [RevBayes Tutorial](./TutorialRev/) for better understanding of the steps and customization of models to better use it with your data. The use of *traderpros* program with the argument *--just_script* produce the RevBayes script without running the analysis it self, and it can be useful for customization.
+More detailed explanation of the algorithm can be seen at the [RevBayes script Tutorial](./TutorialRev).
 
-### The programs
+> [!Note]
+>> Our package is limited to the model priors and parameters provided in [Azevedo et al. (2024)](). We strongly recommend you to check the [RevBayes Tutorial](./TutorialRev/) for better understanding of the steps and customization of models to better use it with your data. The use of *traderpros* program with the argument *--just_script* produce the RevBayes script without running the analysis it self, and it can be useful for customization.
+
+## The programs
 [traderpros](./src/traderpros.py) and [traderpros_sim](./src/traderpros_sim.py) generates Rev scripts and calls [RevBayes](https://revbayes.github.io/) to run them.  [traderpros](./src/traderpros.py) is used for estimating parameters and fos species delimitation. [traderpros_sim](./src/traderpros_sim.py) is used for simulations.
   
 [sum_and_plot](./src/sum_and_plot.py) is a wrapper of [customized R functions](./src/custom_R_functions/) that uses [RevGadgets](), [coda]() and [ggplot2]() to summarize and plot posterior distribution of parameters and probability pie charts of the different models tested with Reversible Jump MCMC (e.g. if a irreversible model of trait is more likely; if there is association between traits and rates, etc...).  
   
 [conspecific_probs](./src/conspecific_probs.py) and [conspecific_binary](./src/conspecific_binary.py) are functions that use [DendroPy](https://jeetsukumaran.github.io/DendroPy) library for visualization of species delimitation results.  [conspecific_probs](./src/conspecific_probs.py) generates a heatmap with the probability of two tips (populations or individuals) be conspecific.  [conspecific_binary](./src/conspecific_binary.py) shows if two tips were estimated in the maximum *a posteriori* result as being conspecific or not.
   
-All these dependencies must be installed and accessible from command line (they should be added to your system $PATH variable). See [Installation instructions](#installation). If you use Traderpros, please cite those dependencies.
-  
-Citations:
-  
-
-
+>[!Important]
+>All dependencies must be installed and accessible from command line (they should be added to your system $PATH variable). See [Installation instructions](#installation). If you use Traderpros, please cite those dependencies.
   
 
 ## Installation  
@@ -31,6 +35,7 @@ If you do not have R and RevBayes installed and added to your $PATH, please see 
 
 Open R and Install R packages dependencies if not done yet.
 
+> [!Note] 
 >> If RevGadgets installation fails, check [instructions on the website](https://revbayes.github.io/tutorials/intro/revgadgets.html). It might be related to the "magick" R package that depends on external software [ImageMagick](https://imagemagick.org/script/download.php). 
 
 
@@ -67,14 +72,30 @@ pip install .
 
 The  installation should check for the dependencies and make sure you can access R and RevBayes from the command line. You can test the program with the commands below. It should run a quick analysis.
 
-> Note: Sometimes the analyses will freeze in the initial steps of the MCMC chain. It usually happens when you have another terminal with RevBayes opened or if you opened RevBayes in that terminal before. If that happens, close the terminals and try again. 
+## What you need to run your data
+For running Traderpros you will need:  
+1. A dated tree (in nexus or newick format) with many populations of each species as tips, [like this one for example](./CicurinaData/BPPConstraint.MCC.CAH.nex)
+2. A trait matrix in nexus format associating each tip with the state found in that population, [like this one](./CicurinaData/CicTroglomorphism.nex). Note that for now, missing data are not accepted and may cause issues.
+3. A tab delimited file mapping each population to a species code, which are represented by natural numbers starting from 0. Every population belonging to the same species should have the same species code. See [this file for example](./CicurinaData/CicSpeciesMatrix.txt)
+4. You also should have a approximated idea of how many population probably exists in the clade (argument *-npop*). We acknowledge that this may be difficult, but we encourage to try different assumptions and see how it affects your conclusions. This should have an stronger effect on the estimative of Birth and Death parameters. If you think you have no good estimate and you think this can influence too much your results, you can try to modify the RevScript to run the analyses without the Birth and Death part of the model. 
+5. You should have and expected the maximum number of sampled species in your clade (argument *-mxsp*), if you have populations with unknown species assignments. If all populations are known to belong to a species, this is the number of sampled species.
+
+## Usage
+
+### Estimating parameters
+To estimate the parameters of the model (and delimit species if it is the case), you first use the program [traderpros](src/traderpros.py). You can run a test with the code below.
+
+> [!Note]
+>> We are running only 100 MCMC generations for speed. You can try increasing to see how long it takes with these dataset. You **DEFINITELY** must increase -ngen when using with your real data!  
 
 ```bash
-traderpros  -opre Test \
-            -odir Test \
-            -t CicurinaData/BPPConstraint.MCC.CAH.nex \
-            -trpt CicurinaData/CicTroglomorphism.nex \
-            -spmt CicurinaData/CicSpeciesMatrix.txt \
+conda activate traderenv
+
+traderpros  -opre exmp_out \
+            -odir exmp_out \
+            -t example_data/example.tre \
+            -trpt example_data/example_trait.nexus \
+            -spmt example_data/example.SpeciesMatrix.txt \
             -tsph no \
             -npop 457 \
             -nhdd 2 \
@@ -84,93 +105,68 @@ traderpros  -opre Test \
             -prlg 1 \
             -prtr 1 \
             -chkp 10
-
-sum_and_plot \
-     --out_dir TestFIGS \
-     --in_dir  Test \
-     --prefix_used_in_traderpros  Test \
-     --burn  0.1 \
-     --out_images_format  "both" \
-     --path_to_custom_functions  src/custom_R_functions
-
-conspecific_probs \
-     -pt Test/Test.Protracted.MAP.tre \
-     -od TestFIGS \
-     -pre Test
-
-conspecific_binary \
-     -ant Test/Test.SpEvents.MAP.tre \
-     -od TestFIGS \
-     -pre Test
 ```
+
+> [!Note]
+>>Sometimes the analyses will freeze in the initial steps of the MCMC chain. It usually happens when you have another terminal with RevBayes opened or if you opened RevBayes in that terminal before. If that happens, close the terminals and try again. 
+
+### Outputs
+The output will be saved in the folder [exmp_out](exmp_out). The file [exmp_out.model.log](exmp_out/exmp_out.model.log) contains the samples for all parameters in the model. It should be used to check MCMC mixing (you can load it to [Tracer](https://www.beast2.org/tracer-2/) for example). However, that file contains many parameters, so, to simplify, there are also the [exmp_out.Rates.log](exmp_out/exmp_out.Rates.log), which contains the MCMC samples for rate parameters only, and the [exmp_out.RJ.log](exmp_out/exmp_out.RJ.log) which contains the probabilities of different models tested with the rjMCMC (both can be loaded into [Tracer](https://www.beast2.org/tracer-2/) too).  
+The files [exmp_out.Protracted.trees](exmp_out/exmp_out.Protracted.trees) and [exmp_out.SpEvents.MAP.tre](exmp_out/exmp_out.SpEvents.MAP.tre) contains the MCMC sampled trees and the maximum *a posteriori* (MAP) tree, respectively, with speciation completion rates and speciation probabilities as branch annotations.  
+The files with suffix SpEventsBrLens and SpEvents contains trees with the number of speciation events as branch lengths and as branch annotations, respectively. The MAP in the file name stands for maximum *a posteriori* as above.
+
+The tree files [exmp_out.traits.MAP.cond.tree](exmp_out/exmp_out.traits.MAP.cond.tree) and [exmp_out/exmp_out.traits.MAP.marg.tree](exmp_out/exmp_out.traits.MAP.marg.tree) have the trees with the conditional and marginal MAP reconstruction of the ancestral states.
   
-## Reproducing analyses from Azevedo et al.
-To reproduce the analyses present in [Azevedo et al. ()](), run the following codes.
+### Summarize and visualize results
+The program [sum_and_plot.py](src/sum_and_plot.py) uses the output generated to summarize and plot results.
 
-```bash
-traderpros  -opre CicRun01 \
-            -odir CicRun01 \
-            -t CicurinaData/BPPConstraint.MCC.CAH.nex \
-            -trpt CicurinaData/CicTroglomorphism.nex \
-            -spmt CicurinaData/CicSpeciesMatrix.txt \
-            -tsph no \
-            -npop 457 \
-            -nhdd 2 \
-            -mxsp 24 \
-            -ngen 100000 \
-            -prsc 10 \
-            -prlg 100 \
-            -prtr 100 \
-            -chkp 1000 \
-            --char_move_intensity 0.75 \
-            -seed_number 1399061603
-
-
-traderpros  -opre CicRun02 \
-            -odir CicRun02 \
-            -t CicurinaData/BPPConstraint.MCC.CAH.nex \
-            -trpt CicurinaData/CicTroglomorphism.nex \
-            -spmt CicurinaData/CicSpeciesMatrix.txt \
-            -tsph no \
-            -npop 457 \
-            -nhdd 2 \
-            -mxsp 24 \
-            -ngen 100000 \
-            -prsc 10 \
-            -prlg 100 \
-            -prtr 100 \
-            -chkp 1000 \
-            --char_move_intensity 0.75 \
-            -seed_number 1605601039
-
+```
 sum_and_plot \
-     --out_dir CicRun01FIGS \
-     --in_dir  CicRun01 \
-     --prefix_used_in_traderpros  CicRun01 \
+     --out_dir exmp_out_FIGS \
+     --in_dir  exmp_out \
+     --prefix_used_in_traderpros  exmp_out \
      --burn  0.1 \
      --out_images_format  "both" \
      --path_to_custom_functions  src/custom_R_functions
-
-conspecific_binary \
-     -ant CicRun01/CicRun01.SpEvents.MAP.tre \
-     -od CicRun01SPLIMITS \
-     -pre CicRun01 \
-     -tax bullis_StoneO_StrLit,bullis_StoneO_UpCree,bullis_StoneO_GenCav,bullis_StoneO_Hilger,bullis_StoneO_BunHol,bullis_StoneO_RooCan,bullis_StoneO_281162,bullis_StoneO_ClasFea,bullis_StoneO_EagNes,bullis_StoneO_281167,bullis_StoneO_QuiCap,bullis_StoneO_HEB,neovespera_UTSA_CE2160,baroniaCF_StoneO_GreeMt,baroniaCF_StoneO_TusHei,baronia_AlamoH_OblPit,baronia_AlamoH_Robber
-
-conspecific_probs \
-     -pt CicRun01/CicRun01.Protracted.MAP.tre \
-     -od CicRun01SPLIMITS \
-     -pre CicRun01 \
-     -tax bullis_StoneO_StrLit,bullis_StoneO_UpCree,bullis_StoneO_GenCav,bullis_StoneO_Hilger,bullis_StoneO_BunHol,bullis_StoneO_RooCan,bullis_StoneO_281162,bullis_StoneO_ClasFea,bullis_StoneO_EagNes,bullis_StoneO_281167,bullis_StoneO_QuiCap,bullis_StoneO_HEB,neovespera_UTSA_CE2160,baroniaCF_StoneO_GreeMt,baroniaCF_StoneO_TusHei,baronia_AlamoH_OblPit,baronia_AlamoH_Robber
 ```
+>[!Note]
+>> Some ggplot2 warning messages may appear ("Please consider using `annotate()`..."). It is fine, you don't need to worry.  
 
-## What you need to run your data
-For running Traderpros you will need:  
-1. A dated tree (in nexus or newick format) with many populations of each species as tips, [like this one for example](./CicurinaData/BPPConstraint.MCC.CAH.nex)
-2. A trait matrix in nexus format associating each tip with the state found in that population, [like this one](./CicurinaData/CicTroglomorphism.nex). Note that for now, missing data are not accepted and may cause issues.
-3. A tab delimited file mapping each population to a species code, which are represented by natural numbers starting from 0. Every population belonging to the same species should have the same species code. See [this file for example](./CicurinaData/CicSpeciesMatrix.txt)
-4. You also should have a approximated idea of how many population probably exists in the clade (argument *-npop*). We acknowledge that this may be difficult, but we encourage to try different assumptions and see how it affects your conclusions. This should have an stronger effect on the estimative of Birth and Death parameters. If you think you have no good estimate and you think this can influence too much your results, you can try to modify the RevScript to run the analyses without the Birth and Death part of the model. 
-5. You should have and expected the maximum number of sampled species in your clade (argument *-mxsp*), if you have populations with unknown species assignments. If all populations are known to belong to a species, this is the number of sampled species.
+It will generate pdf and png figures of trees with branch rates (extinction, birth and speciation completion), of the posterior distribution of each state specific rates and transition rates, and pie charts of the probability of models (e.g. if speciation completion rate is state dependent).
+
+Below you can see the tree with estimated speciation completion rates on branches.
+![Branch speciation completion rates](exmp_out_FIGS/exmp_out.SpBrachRate.MAP.tre.png)
+
+Here is the posterior distribution of the rates associated with each state. The dashed lines represents the median value of the distribution:
+![Speciation completion posterior distribution](exmp_out_FIGS/exmp_outSp_completion.png)
+
+The probability of the speciation completion be dependent on the state is:
+![rjMCMC sp completion](exmp_out_FIGS/exmp_out_is_spCompletion_state_dependent.png)
+
+
+The tree with ancestral state reconstructed:
+![Ancestral states](exmp_out_FIGS/AncEstTree.cond.MAP.wHiddenn.png)
+
+
+Lastly, the file [exmp_out.RatesSummStats.csv](exmp_out_FIGS/exmp_out.RatesSummStats.csv) contains summary statistics for the rate variables.
+
+
+### Species delimitation results
+If you are interested in species delimitation, you should chack the output with extension [.SpEvents.tree.](exmp_out_FIGS/traderpros.SpEvents.tree.png). It contains the estimated number of speciation events on each branch. All terminals that are connected by branches with no speciation events belongs to same species. you should look for the terminals which were coded with "?" in the species matrix file.
+
+![.SpEvents.tree.](exmp_out_FIGS/traderpros.SpEvents.tree.png)
+
+To facilitate you can use [conspecific_binary.py](src/conspecific_binary.py) to see pairwise comparison. You can use `-tax` or `--keep_only_taxa` to plot only focal taxa instead of the complete tree. The program takes as input the MAP tree with information on the number of speciation events 
+
+```
+conspecific_binary \
+     -ant exmp_out/exmp_out.SpEvents.MAP.tre \
+     -tax pop93,pop78,pop86,pop94,pop179,pop180,pop143,pop57,pop58,pop52 \
+     -od exmp_out_FIGS \
+     -pre exmp_out
+```
+The file with suffix [_heatmap.binsp.png](exmp_out_FIGS/exmp_out_heatmap.binsp.png). will have the results. Blue squares mean same species.
+![exmp_out_FIGS/exmp_out_heatmap.binsp.png](exmp_out_FIGS/exmp_out_heatmap.binsp.png)
 
 ### Command reference
 Type name of the program with the flag *-h*  to see all options and defaults.
@@ -179,8 +175,9 @@ Type name of the program with the flag *-h*  to see all options and defaults.
 ```
 usage: traderpros [-h] [-s SEED_NUMBER] [-opre OUT_PREFIX] [-odir OUT_DIR] -t TREE_PATH -trpt TRAIT_PATH -spmt SP_MATRIX [-tsph {yes,no}] [-ptph TENSOR_PATH]
                   -npop NUM_TOTAL_POPULATIONS [-nhdd NUM_HIDDEN] [-mhdd MEAN_HIDDEN_HYPERPRIOR] [-nproc NUM_PROCESSORS] [-trpr TRANSITION_PRIOR_PARAM]
-                  [-btpr BIRTH_PRIOR_PARAM] [-dtpr DEATH_PRIOR_PARAM] [-sppr SPECIATION_PRIOR_PARAM] -mxsp MAX_NUM_SPECIES [-mvit CHAR_MOVE_INTENSITY] [-ngen N_GEN]
-                  [-prsc PRINT_SCREEN] [-prlg PRINT_LOG] [-prtr PRINT_TREE] [-nrun N_RUNS] [-chkp CHECK_POINT_INTERVAL] [-burn BURN_IN] [-justscript JUST_SCRIPT]
+                  [-btpr BIRTH_PRIOR_PARAM] [-dtpr DEATH_PRIOR_PARAM] [-sppr SPECIATION_PRIOR_PARAM] -mxsp MAX_NUM_SPECIES [-mvit CHAR_MOVE_INTENSITY]
+                  [-ngen N_GEN] [-prsc PRINT_SCREEN] [-prlg PRINT_LOG] [-prtr PRINT_TREE] [-nrun N_RUNS] [-chkp CHECK_POINT_INTERVAL] [-burn BURN_IN]
+                  [-justscript JUST_SCRIPT]
 
 Estimate parameters of a trait dependent protracted speciation model.
 
@@ -199,9 +196,9 @@ options:
   -spmt, --sp_matrix SP_MATRIX
                         Species matrix file path (mandatory).
   -tsph, --use_tensor {yes,no}
-                        Specify "yes" to use TensorPhylo or "no" to not use it (default: "no"). TensorPhylo is a library to speed up likelihood computation for SSE models. It need
-                        to be downloaded and installed separatly. See details on TensorPhylo at https://bitbucket.org/mrmay/tensorphylo/. Note: As for 20 Nov 2024 - Sometimes it
-                        throws an error and interrupts analysis.
+                        Specify "yes" to use TensorPhylo or "no" to not use it (default: "no"). TensorPhylo is a library to speed up likelihood computation for
+                        SSE models. It need to be downloaded and installed separatly. See details on TensorPhylo at https://bitbucket.org/mrmay/tensorphylo/.
+                        Note: As for 20 Nov 2024 - Sometimes it throws an error and interrupts analysis.
   -ptph, --tensor_path TENSOR_PATH
                         TensorPhylo plugin path (required if use_tensor=True).
   -npop, --num_total_populations NUM_TOTAL_POPULATIONS
@@ -280,14 +277,17 @@ options:
 ```
 #### conspecific_binary
 ```
-usage: conspecific_binary [-h] -spt SPECIATION_EVENTS_TREE [-od OUT_DIR] [-pre PREFIX] [-tax KEEP_ONLY_TAXA] [-fgs FIGSIZE] [-fts FONTSIZE]
+usage: conspecific_binary [-h] [-ant ANNOTATED_TREE] [-brt BRANCH_LENGTH_TREE] [-od OUT_DIR] [-pre PREFIX] [-tax KEEP_ONLY_TAXA] [-fgs FIGSIZE] [-fts FONTSIZE]
 
 Create plot of conspecificity.
 
 options:
   -h, --help            show this help message and exit
-  -spt, --speciation_events_tree SPECIATION_EVENTS_TREE
-                        Path to tree with speciation events (Nexus format)
+  -ant, --annotated_tree ANNOTATED_TREE
+                        Path to tree with speciation events as branch/node annotations (in Nexus format). The annotation should be name
+                        branch_speciation_events.
+  -brt, --branch_length_tree BRANCH_LENGTH_TREE
+                        Path to tree with speciation events as branch lengths (Nexus format)
   -od, --out_dir OUT_DIR
                         Output directory
   -pre, --prefix PREFIX
@@ -323,45 +323,28 @@ options:
 
 #### traderpros_sim
 ```
-usage: traderpros_sim [-h] [-s SEED_NUMBER] [-opre OUT_PREFIX] [-odir OUT_DIR] -bo BIRTH_OBSERVED -eo EXTINCTION_OBSERVED -bh BIRTH_HIDDEN -eh EXTINCTION_HIDDEN
-                      -tr TRANSITION_RATES -ht HIDDEN_TRANS -rp ROOT_PROBS -ra ROOT_AGE [-ps POPSAMPLING_PROB] -nt N_TIPS -sc SP_COMPLETION_RATES [-ns N_SIMULATIONS]
-                      [-justscript] [-org] [-unk N_UNKNOWN_SP]
+usage: traderpros_sim [-h] [-phy PHYLOGENY] [-s SEED_NUMBER] [-opre OUT_PREFIX] [-odir OUT_DIR] -tr TRANSITION_RATES -rp ROOT_PROBS -sc SP_COMPLETION_RATES
+                      [-ns N_SIMULATIONS] [-justscript] [-org] [-unk N_UNKNOWN_SP]
 
 Simulates data under the Traderpros model.
 
 options:
   -h, --help            show this help message and exit
+  -phy, --phylogeny PHYLOGENY
+                        Phylogenetic tree in nexus or newick.
   -s, --seed_number SEED_NUMBER
                         Seed number for replication (default: 0).
   -opre, --out_prefix OUT_PREFIX
                         Output file prefix (default: "Traderpros").
   -odir, --out_dir OUT_DIR
                         Output directory (default: "trader_out").
-  -bo, --birth_observed BIRTH_OBSERVED
-                        A comma-separated list of state specific birth rates for observed states (mandatory).
-  -eo, --extinction_observed EXTINCTION_OBSERVED
-                        A comma-separated list of state specific death rates for observed states (mandatory).
-  -bh, --birth_hidden BIRTH_HIDDEN
-                        A comma-separated list of state specific birth rates for hidden states. The mean of rates must be 1. If you wish a model with no hidden rates,
-                        chose 1,1 (mandatory).
-  -eh, --extinction_hidden EXTINCTION_HIDDEN
-                        A comma-separated list of state specific death rates for hidden states. The mean of rates must be 1. If you wish a model with no hidden rates,
-                        chose 1,1 (mandatory).
   -tr, --transition_rates TRANSITION_RATES
-                        A comma-separated list of transition rates between observed states. It should be absolute rates. First value represents transition from 0 to 1
-                        and second value should be the 1 to 0 transition (mandatory).
-  -ht, --hidden_trans HIDDEN_TRANS
-                        A comma-separated list of transition rates between hidden states. It should be absolute rates. First value represents transition from A to B
-                        and second value should be the B to 1 transition (mandatory).
+                        A comma-separated list of transition rates between observed states. It should be absolute rates. First value represents transition from
+                        0 to 1 and second value should be the 1 to 0 transition (mandatory).
   -rp, --root_probs ROOT_PROBS
-                        A comma-separated list of probabilities for the all 4 root states (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1
-                        Hidden B). It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0
-                        (mandatory).
-  -ra, --root_age ROOT_AGE
-                        The age of the root of the tree (mandatory).
-  -ps, --popsampling_prob POPSAMPLING_PROB
-                        Probability of sampling a population (default: 1.0).
-  -nt, --n_tips N_TIPS  The number of tips in the final tree (mandatory).
+                        A comma-separated list of probabilities for the all 4 root states (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B,
+                        Observed 1 Hidden B). It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0,
+                        0.5, 0.0 (mandatory).
   -sc, --sp_completion_rates SP_COMPLETION_RATES
                         A comma-separated list of state specific speciation completion rates for observed states (mandatory).
   -ns, --n_simulations N_SIMULATIONS
@@ -373,6 +356,66 @@ options:
   -unk, --n_unknown_sp N_UNKNOWN_SP
                         Number of tips to be set as "unknown" species assignment in the Species Matrix file for testing application of the model for species
                         delimitation (default: 0)
+```
+
+## Reproducing analyses from Azevedo et al.
+To reproduce the analyses present in [Azevedo et al. (in prep)](), run the following codes.
+
+```bash
+traderpros  -opre CicRun01 \
+            -odir CicRun01 \
+            -t CicurinaData/BPPConstraint.MCC.CAH.nex \
+            -trpt CicurinaData/CicTroglomorphism.nex \
+            -spmt CicurinaData/CicSpeciesMatrix.txt \
+            -tsph no \
+            -npop 457 \
+            -nhdd 2 \
+            -mxsp 24 \
+            -ngen 100000 \
+            -prsc 10 \
+            -prlg 100 \
+            -prtr 100 \
+            -chkp 1000 \
+            --char_move_intensity 0.75 \
+            -seed_number 1399061603
+
+
+traderpros  -opre CicRun02 \
+            -odir CicRun02 \
+            -t CicurinaData/BPPConstraint.MCC.CAH.nex \
+            -trpt CicurinaData/CicTroglomorphism.nex \
+            -spmt CicurinaData/CicSpeciesMatrix.txt \
+            -tsph no \
+            -npop 457 \
+            -nhdd 2 \
+            -mxsp 24 \
+            -ngen 100000 \
+            -prsc 10 \
+            -prlg 100 \
+            -prtr 100 \
+            -chkp 1000 \
+            --char_move_intensity 0.75 \
+            -seed_number 1605601039
+
+sum_and_plot \
+     --out_dir CicRun01FIGS \
+     --in_dir  CicRun01 \
+     --prefix_used_in_traderpros  CicRun01 \
+     --burn  0.1 \
+     --out_images_format  "both" \
+     --path_to_custom_functions  src/custom_R_functions
+
+conspecific_binary \
+     -ant CicRun01/CicRun01.SpEvents.MAP.tre \
+     -od CicRun01SPLIMITS \
+     -pre CicRun01 \
+     -tax bullis_StoneO_StrLit,bullis_StoneO_UpCree,bullis_StoneO_GenCav,bullis_StoneO_Hilger,bullis_StoneO_BunHol,bullis_StoneO_RooCan,bullis_StoneO_281162,bullis_StoneO_ClasFea,bullis_StoneO_EagNes,bullis_StoneO_281167,bullis_StoneO_QuiCap,bullis_StoneO_HEB,neovespera_UTSA_CE2160,baroniaCF_StoneO_GreeMt,baroniaCF_StoneO_TusHei,baronia_AlamoH_OblPit,baronia_AlamoH_Robber
+
+conspecific_probs \
+     -pt CicRun01/CicRun01.Protracted.MAP.tre \
+     -od CicRun01SPLIMITS \
+     -pre CicRun01 \
+     -tax bullis_StoneO_StrLit,bullis_StoneO_UpCree,bullis_StoneO_GenCav,bullis_StoneO_Hilger,bullis_StoneO_BunHol,bullis_StoneO_RooCan,bullis_StoneO_281162,bullis_StoneO_ClasFea,bullis_StoneO_EagNes,bullis_StoneO_281167,bullis_StoneO_QuiCap,bullis_StoneO_HEB,neovespera_UTSA_CE2160,baroniaCF_StoneO_GreeMt,baroniaCF_StoneO_TusHei,baronia_AlamoH_OblPit,baronia_AlamoH_Robber
 ```
 
 ##### Simulating data as in Azevedo et al.
@@ -523,9 +566,11 @@ for i in $folders
          -pre SimTrueSpLim
 done
 
-
-			
 ``` 
 
-# References
-Sukumaran J, Holder MT, Knowles LL (2021) Incorporating the speciation process into species delimitation. [PLOS Computational Biology 17(5): e1008924](ttps://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008924) 
+## References
+Azevedo G.H.F., Blair J., Hedin M. (in prep). Trait dependent protracted speciation model illuminates the influence of troglomorphism on the diversification of cave meshweaver spiders threatened by urbanization.
+
+Rosindell J., Cornell S.J., Hubbell S.P., Etienne R.S. (2010). Protracted speciation revitalizes the neutral theory of biodiversity. [Ecology Letters. 13:716–727](https://doi.org/10.1111/j.1461-0248.2010.01463.x).
+
+Sukumaran J., Holder M.T., Knowles L.L. (2021) Incorporating the speciation process into species delimitation. [PLOS Computational Biology 17(5): e1008924](ttps://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008924) 
