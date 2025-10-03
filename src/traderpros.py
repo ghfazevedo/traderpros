@@ -60,6 +60,11 @@ def create_revscript(args):
     
     # Indicate the max number of possible species in the tree (do not considered unsampled species)
     MAX_NUM_SPECIES <-  {args.max_num_species}
+
+    # Indicate the root prior probabilities for the all 4 root states 
+    # (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1 Hidden B).  
+    # It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0
+    ROOT_PRIOR <- [{args.root_prior}]
     
     # Chose the intensity of the moves on the augmented data history.
     # It should be a number between 0 and 1. Small numbers move trait history in fewer branches and are faster, but migh be less efficient.
@@ -245,8 +250,11 @@ def create_revscript(args):
     rate_matrix := fnHiddenStateRateMatrix(transition_rates, R, rescaled=FALSE)
     
     # Root prior
-    root_prior ~ dnDirichlet( rep(1,num_rates) )
+    root_prior ~ dnDirichlet( ROOT_PRIOR )
     moves.append( mvDirichletSimplex(root_prior,tune=true,weight=1) )
+    
+    #root_prior ~ dnDirichlet( rep(1,num_rates) )
+    #moves.append( mvDirichletSimplex(root_prior,tune=true,weight=1) )
     #moves.append( mvBetaSimplex(root_prior,tune=true,weight=1) )
     
     # Probability of sampling extant populations
@@ -663,6 +671,7 @@ def main():
     parser.add_argument('-btpr', '--birth_prior_param', type=float, default=1, help='Birth prior parameter (default: 1).')
     parser.add_argument('-dtpr', '--death_prior_param', type=float, default=1, help='Death prior parameter (default: 1).')
     parser.add_argument('-sppr', '--speciation_prior_param', type=float, default=1, help='Speciation prior parameter (default: 1).')
+    parser.add_argument('-rp', '--root_prior', type=str, default="1,1,1,1", help='A comma-separated list of probabilities for the all 4 root states (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1 Hidden B).  It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0.')
     parser.add_argument('-mxsp', '--max_num_species', type=int, required=True, help='Max number of species (mandatory).')
     parser.add_argument('-mvit', '--char_move_intensity', type=float, default=0.5, help='Character move intensity (default: 0.5).')
     parser.add_argument('-ngen', '--n_gen', type=int, default=10000, help='Number of generations (default: 10000).')
@@ -683,6 +692,10 @@ def main():
     args.sp_matrix   = os.path.abspath(args.sp_matrix)
     if args.tensor_path:
         args.tensor_path = os.path.abspath(args.tensor_path)
+
+    # Convert 0 to a small value for RevBays Dirichlet
+    if "0" in args.root_prior:
+        args.root_prior = args.root_prior.replace('0', '0.001')
 
     # Create the revscript
     revscript = create_revscript(args)

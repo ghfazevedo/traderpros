@@ -49,7 +49,7 @@ if not check_r_packages():
 
 setup(
     name="traderpros",
-    version="0.9.20250427",
+    version="0.9.20251002",
     author="Guilherme Azevedo",
     description="A CLI tool for generating RevBayes scripts and run a Trait Dependent Rates Protracted Speciation",
     long_description=open("README.md").read(),
