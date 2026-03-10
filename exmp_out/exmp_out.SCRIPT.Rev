@@ -12,12 +12,10 @@
     TRAIT_PATH   =  "/mnt/c/Gui/projects/traderpros/traderpros/example_data/example_trait.nexus"
     SP_MATRIX    =   "/mnt/c/Gui/projects/traderpros/traderpros/example_data/example.SpeciesMatrix.txt"
     
-    
     # Do you want to use Tensor phylo? Sometimes analysys freeze when using it. Not sure why.
     USE_TENSOR =  "no"
     # TensorPhylo path if TRUE
     TENSOR_PATH  =  "None"
-    
     
     ########################
     #  Model Variables     #
@@ -29,7 +27,7 @@
     # Number of hidden states
     NUM_HIDDEN            =  2
     
-    # Se the mean for the exponential hyperprior of the standard deviation parameter of the discretized distribution for the hidden rates
+    # Set the mean for the exponential hyperprior of the standard deviation parameter of the discretized distribution for the hidden rates
     # The value below is set so that we expect the 95% interval of the hidden rate to span 1 order of magnitude
     MEAN_HIDDEN_HYPERPRIOR   =  0.587405
     
@@ -42,20 +40,24 @@
     # Global birth rate prior exponential distribution rate (1/mean) parameter
     BIRTH_PRIOR_PARAM  <-  1  
     
-    # Global birth prior exponential distribution rate (1/mean) parameter
-    DEATH_PRIOR_PARAM  <-  1  
+    # Global death (extinction) prior exponential distribution rate (1/mean) parameter
+    EXTINCTION_PRIOR_PARAM   <-  1  
     
     # Global speciation completion prior exponential distribution rate (1/mean) parameter
     SPECIATION_PRIOR_PARAM  <-  1  
     
     # Indicate the max number of possible species in the tree (do not considered unsampled species)
     MAX_NUM_SPECIES <-  24
+
+    # Indicate the root prior probabilities for the all 4 root states 
+    # (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1 Hidden B).  
+    # It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0
+    ROOT_PRIOR <- [1,1,1,1]
     
     # Chose the intensity of the moves on the augmented data history.
     # It should be a number between 0 and 1. Small numbers move trait history in fewer branches and are faster, but migh be less efficient.
     # If you have big trees a value of 1 might take too long. You can make a few tests
     CHAR_MOVE_INTESITY =  0.5
-    
     
     ########################
     #  MCMC Settings       #
@@ -119,83 +121,66 @@
     data <- readDiscreteCharacterData(TRAIT_PATH)
     num_states <- data.getStateDescriptions().size()
     data_exp <- data.expandCharacters( NUM_HIDDEN )
-    # Get number of birth and death rates
+    # Get number of birth and extinction rates
     num_rates <- num_states * NUM_HIDDEN
     
-    # Read species matrix, which map population to species using natural numbers for different species
-    # We read the same file as a matrix and as a chracacter data for using in different part of the script.
-    
-    popMap = readDataDelimitedFile(SP_MATRIX, header=TRUE)
+    # Read species matrix, which map population to species using natural numbers (excluding 0) for different species. 
+    # Matrix should not have 0 and populations with uncertain assignments could be present as "?" 
     speciesData = readDelimitedCharacterData(file= SP_MATRIX , stateLabels=MAX_NUM_SPECIES )
     
     #######################################
     # This is the HiSSE part of the model #
     #######################################
     # Rates priors
-    # Note that the birth rates are the speciation initiation rates in this model
+    # Note that the birth rates are the speciation initiation (or population formation) rates in this model
     
     # Observed speciation and extinction
     global_birth ~ dnExponential(BIRTH_PRIOR_PARAM)
     global_birth.setValue( (NUM_TOTAL_POPULATIONS-2) / tree_length )
-    global_death ~ dnExponential(DEATH_PRIOR_PARAM)
-    global_death.setValue( global_birth / 10 )
+    global_extinction ~ dnExponential(EXTINCTION_PRIOR_PARAM)
+    global_extinction.setValue( global_birth / 10 )
     
     moves.append( mvScale(global_birth,weight=1.0) )
-    moves.append( mvScale(global_death,weight=1.0) )
+    moves.append( mvScale(global_extinction,weight=1.0) )
     
     birth_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
-    death_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
+    extinction_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
     
     moves.append( mvRJSwitch(birth_relative , weight=1.0) )
-    moves.append( mvRJSwitch(death_relative , weight=1.0) )
+    moves.append( mvRJSwitch(extinction_relative , weight=1.0) )
     moves.append( mvDirichletSimplex( birth_relative, weight=1 ) )
-    moves.append( mvDirichletSimplex( death_relative, weight=1 ) )
+    moves.append( mvDirichletSimplex( extinction_relative, weight=1 ) )
     
     birth_observed := birth_relative * global_birth
-    extinction_observed := death_relative * global_death
-    
-    # The structuring rate (equivalent to diversification when tips are species)
-    structuring_rate := birth_observed - extinction_observed
-    
+    extinction_observed := extinction_relative * global_extinction
+   
     # Hidden birth rates based on discretized continuous distribution
     ln_birth_hidden_mean <- ln(1.0)
-    birth_hidden_sd ~ dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR )
+    birth_hidden_sd ~ dnReversibleJumpMixture( 0.0, dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR ), p=0.5 )
     moves.append( mvScale(birth_hidden_sd, lambda=1, tune=true, weight=1.0) )
-    
+    moves.append( mvRJSwitch(birth_hidden_sd , weight=1.0) )
+
     birth_hidden_unormalized := fnDiscretizeDistribution( dnLognormal(ln_birth_hidden_mean, birth_hidden_sd), NUM_HIDDEN )
     
-    # Normalize the hidden so the mean is 1
-    birth_hidden_on := birth_hidden_unormalized / mean(birth_hidden_unormalized)
-    
-    # Create a reversible jump to test for existence of hidden rate
-    # First element represent the absence of hidden, e.g. hidden is equal the observed
-    birth_hidden_models := v( v(1.0,1.0), birth_hidden_on )
-    model_indicator_birth ~ dnCategorical(simplex(1,1))
-    moves.append( mvRandomGeometricWalk(model_indicator_birth, weight=1.0, tune=TRUE))
-    
-    birth_hidden := birth_hidden_models[model_indicator_birth]
+    # Normalize the hidden so the sum is 1
+    birth_hidden := birth_hidden_unormalized / sum(birth_hidden_unormalized)
     
     # Repeat for the extinction rates
     ln_extinction_hidden_mean <- ln(1.0)
-    extinction_hidden_sd ~ dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR )
+    extinction_hidden_sd ~ dnReversibleJumpMixture( 0.0, dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR ), p=0.5 )
     moves.append( mvScale(extinction_hidden_sd, lambda=1, tune=true, weight=1.0) )
-    
+    moves.append( mvRJSwitch(extinction_hidden_sd , weight=1.0) )
+
     extinction_hidden_unormalized := fnDiscretizeDistribution( dnLognormal(ln_extinction_hidden_mean, extinction_hidden_sd), NUM_HIDDEN )
-    extinction_hidden_on := extinction_hidden_unormalized / mean(extinction_hidden_unormalized)
-    
-    extinction_hidden_models := v( v(1.0,1.0), extinction_hidden_on )
-    model_indicator_extinc ~ dnCategorical(simplex(1,1))
-    moves.append( mvRandomGeometricWalk(model_indicator_extinc, weight=1.0, tune=TRUE))
-    
-    extinction_hidden := extinction_hidden_models[model_indicator_extinc]
+    extinction_hidden := extinction_hidden_unormalized / sum(extinction_hidden_unormalized)
     
     # Create variables to track the probability of the state dependent model
     is_birth_state_dependent := ifelse( birth_relative == simplex(rep(1,num_states)), 0.0, 1.0)
-    is_death_state_dependent := ifelse( death_relative == simplex(rep(1,num_states)), 0.0, 1.0)
-    is_bd_state_dependent := ifelse( (death_relative == simplex(rep(1,num_states)) & birth_relative == simplex(rep(1,num_states))), 0.0, 1.0)
+    is_extinction_state_dependent := ifelse( extinction_relative == simplex(rep(1,num_states)), 0.0, 1.0)
+    is_bd_state_dependent := ifelse( (extinction_relative == simplex(rep(1,num_states)) & birth_relative == simplex(rep(1,num_states))), 0.0, 1.0)
     
-    is_death_hidden := ifelse( model_indicator_extinc == 1, 0.0, 1.0)
-    is_birth_hidden := ifelse( model_indicator_birth == 1, 0.0, 1.0)
+    is_extinction_hidden := ifelse( birth_hidden_sd == 0, 0.0, 1.0)
+    is_birth_hidden := ifelse( extinction_hidden_sd == 0, 0.0, 1.0)
     
     # Put the two rates together
     for (j in 1:NUM_HIDDEN) {
@@ -205,20 +190,39 @@
             extinction[index] := extinction_observed[i] * extinction_hidden[j]
         }
     }
-    
+
+    # The structuring rate (equivalent to diversification when tips are species)
+    structuring_rate_observed := birth_observed - extinction_observed
+    global_structuring_rate := global_birth - global_extinction
+    structuring_rate :=  birth - extinction
+
     # Global trait transition
     global_trans_rate ~  dnExp(TRANS_PRIOR_PARAM)
     moves.append( mvScale( global_trans_rate, weight=1 ) )
     
     # Relative Transition with reversible jump to test for irreversibility
     n_obs_rates = num_states * (num_states-1)
-    relative_transition ~ dnReversibleJumpMixture( simplex(1,0), dnDirichlet(rep(1, n_obs_rates)), p=0.5 )
+    if(n_obs_rates > 2){
+        irreverssible_free ~ dnDirichlet(rep(1, n_obs_rates/2))
+        moves.append( mvDirichletSimplex( irreverssible_free, weight=1 ) )
+        for (i in 1:n_obs_rates){
+            if(i <= n_obs_rates/2){
+                irreverssible[i] <- irreverssible_free[i]
+            }else{
+                irreverssible[i] <- 0
+            }
+        }
+    }else{
+        irreverssible <- simplex(1,0)
+    }
+
+    relative_transition ~ dnReversibleJumpMixture( simplex(irreverssible), dnDirichlet(rep(1, n_obs_rates)), p=0.5 )
     
     moves.append( mvRJSwitch(relative_transition , weight=1.0) )
     moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
     
     # Track probability of reversibility (0 means no, 1 means yes)
-    is_reversible := ifelse( relative_transition == simplex(1,0), 0.0, 1.0)
+    is_reversible := ifelse( relative_transition == simplex(irreverssible), 0.0, 1.0)
     
     # The trait transition without hidden
     transition_rates := relative_transition * global_trans_rate
@@ -235,7 +239,7 @@
     rate_matrix := fnHiddenStateRateMatrix(transition_rates, R, rescaled=FALSE)
     
     # Root prior
-    root_prior ~ dnDirichlet( rep(1,num_rates) )
+    root_prior ~ dnDirichlet( ROOT_PRIOR )
     moves.append( mvDirichletSimplex(root_prior,tune=true,weight=1) )
     #moves.append( mvBetaSimplex(root_prior,tune=true,weight=1) )
     
@@ -274,114 +278,163 @@
     ####################################
     # The protracted part of the model #
     ####################################
-    
-    # We will not consider hidden states for speciation completion rates
-    # Therefore we need to create another rate matrix for the data augmentation.
-    # We use the same transition rates create before.
-    
-    # Q matrix
-    Q := fnFreeK(transition_rates, rescale=FALSE)
-    
-    root_prior_observed_states := simplex(root_prior[1] + root_prior[3], root_prior[2] + root_prior[4])
-    
-    # The Data Augmented PhyloCTMC
-    trait_evol ~ dnPhyloCTMCDASiteIID(tree,
-                                      Q,
+
+   # This is the data augmentation to get states on the branches
+    trait_evol ~ dnPhyloCTMCDASiteIID(tree=tree,
+                                      Q=rate_matrix,
                                       branchRates=1,
-                                      type="Standard",
+                                      type="NaturalNumbers",
                                       nSites=1,
-                                      rootFrequencies=root_prior_observed_states,
-                                      treatAmbiguousAsGap=FALSE)
+                                      rootFrequencies=root_prior,
+                                      treatAmbiguousAsGap=TRUE)
+
+    # The dnPhyloCTMCDASiteIID() does not accept to clamp ambiguous character, which is necessary for hidden state.
+    # Therefore, we have the code above to adapt the data augmentation to use hidden states.
+ 
+    # This is just to create a taxon data with unknown state "?" so we can use missing data
+    helper_data <- data
+    helper_data.addMissingTaxa("Fictional")
+
+    # Here we create a loop to only accept trait evolution that matches our observed states, regardless of which hidden state it is.
+    for (i in 1:trait_evol.ntaxa()) {
+        if (!(data[data.taxonIndex(trait_evol.taxa()[i].getName())][1] ==  helper_data[helper_data.taxonIndex("Fictional")][1])){
+        
+            obs_state  := 1*data[data.taxonIndex(trait_evol.taxa()[i].getName())][1]
+            evol_state := 1*trait_evol[i][1]
     
-    trait_evol.clamp(data)
-    
-    moves.append( mvCharacterHistory(ctmc=trait_evol, 
-                                     qmap_site=Q,
-                                     graph="node",
-                                     proposal="rejection",
-                                     weight=round(n_nodes * CHAR_MOVE_INTESITY)) )
-    moves.append( mvCharacterHistory(ctmc=trait_evol,
-                                     qmap_site=Q,
-                                     graph="branch",
-                                     proposal="rejection",
-                                     weight=round(n_branches * CHAR_MOVE_INTESITY)) )
-    
+            success[i] := ifelse( (evol_state % num_states) == obs_state , 1 , 0 )
+            trait_evol_success[i] ~ dnBernoulli(Probability(success[i]))
+            trait_evol_success[i].clamp(1)
+        }else{
+            success[i] <- 1
+            trait_evol_success[i] ~ dnBernoulli(Probability(success[i]))
+            trait_evol_success[i].clamp(1)
+        }
+    }
+
     # Global Speciation completion rate
-    SpeciationComplRate ~ dnExponential(SPECIATION_PRIOR_PARAM)
-    
-    moves.append(mvScale(SpeciationComplRate, weight=1))
+    global_spCompletion ~ dnExponential(SPECIATION_PRIOR_PARAM)
+    moves.append(mvScale(global_spCompletion, weight=1))
     
     # State specific speciation completion rate with reversible jumps
-    stateSpecificRateWeights ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
+    spCompletion_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
     
-    moves.append( mvRJSwitch(stateSpecificRateWeights, weight=1.0) )
-    moves.append(mvSimplex(stateSpecificRateWeights, weight=1))
-    
-    # Track probability of state dependent: 0 is not, 1 it is.
-    is_spCompletion_state_dependent := ifelse( stateSpecificRateWeights == simplex(rep(1, num_states)), 0.0, 1.0)
-    
+    moves.append( mvRJSwitch(spCompletion_relative, weight=1.0) )
+    moves.append(mvSimplex(spCompletion_relative, weight=1))
+
     # State specific rates
-    stateSpecificRates := stateSpecificRateWeights * SpeciationComplRate
+    spCompletion_obs := spCompletion_relative * global_spCompletion
+
+    # Hidden speciation completion
+    ln_completion_hidden_mean <- ln(1.0)
+    spCompletion_hidden_sd ~ dnReversibleJumpMixture( 0.0, dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR ), p=0.5 )
+    moves.append( mvScale(spCompletion_hidden_sd, lambda=1, tune=true, weight=1.0) )
+    moves.append( mvRJSwitch(spCompletion_hidden_sd, weight=1.0) )
+
+    spCompletion_hidden_unormalized := fnDiscretizeDistribution( dnLognormal(ln_completion_hidden_mean, spCompletion_hidden_sd), NUM_HIDDEN )
+    spCompletion_hidden := spCompletion_hidden_unormalized / sum(spCompletion_hidden_unormalized)
+ 
+    # Track probability of state dependent: 0 is not, 1 it is.
+    is_spCompletion_state_dependent := ifelse( spCompletion_relative == simplex(rep(1, num_states)), 0.0, 1.0)
+    is_spCompletion_hidden := ifelse( spCompletion_hidden_sd == 0, 0.0, 1.0)
+
+    # Put the two rates together
+    for (j in 1:NUM_HIDDEN) {
+        for (i in 1:num_states) {
+            index = i+(j*num_states)-num_states
+            spCompletion[index] := spCompletion_obs[i] *spCompletion_hidden[j]
+        }
+    }
+
+    # Create variable to track effective diversification rates.
+    # This is the rate at species does not go extinct and at least one of the events happen: population formation, speciation completion, tstate transition
+    index=1
+    for (i in 1:rate_matrix.size() ){
+        for (j in 1:rate_matrix.size() ){
+            if (i==j){
+                rate_of_leaving_state[index] :=  -1*rate_matrix[i][j]
+                index = index+1
+            }
+        }
+    }
+
+    effective_diversity :=  birth + 
+                            spCompletion + 
+                            rate_of_leaving_state -
+                            extinction
+
+    # Initialize the first observed state with all its indices
+    first_vec = [1]
+    for (h in 1:(NUM_HIDDEN-1)) {
+        k = 1 + h * num_states
+        first_vec.append(k)
+    }
+    indexes_of_effective_diversity = [ first_vec ]
     
-    # State specific branch rates
+    # Now for the remaining observed states
+    for (i in 2:num_states) {
+        idx_vec = [i]
+        for (h in 1:(NUM_HIDDEN-1)) {
+            k = i + h * num_states
+            idx_vec.append(k)
+        }
+        indexes_of_effective_diversity.append(idx_vec)
+    }
+    
+    for (i in 1:num_states) {
+        for (k in 1:NUM_HIDDEN){
+            to_sum[i][k] := effective_diversity[indexes_of_effective_diversity[i][k]]
+        }
+    }
+
+   for (i in 1:to_sum.size() ){
+     effective_diversity_obs[i] := sum(to_sum[i])
+   }
+
+    is_effective_diversity_equal := ifelse( simplex(abs(effective_diversity_obs)) == simplex(rep(1, num_states)), 1, 0)
+
+    # Branch rates
+    # Now we can compute the speciation completion rates on each branch based on the time spent on each character on that branch.
     for(i in 1:n_branches) {
-        state_branch_rate[i] := sum(trait_evol.relativeTimeInStates(i,1) * stateSpecificRates)
+        branch_spCompletion[i] := sum(trait_evol.relativeTimeInStates(i,1) * spCompletion)
     }
-    
-    # Now it comes the trick part, that is the Trait Dependent Rates Protracted Speciation Tree
-    TreeSpeciesTip <- tree
-    for (i in 1:popMap.size()){
-        TreeSpeciesTip.setTaxonName(popMap[i][1], popMap[i][2] )
-        }
-    
-    # Iterate to clamp observed non-speciatipn completion events
-    iteration=1
-    for (i in (tree.ntips()+1):n_nodes){
-        j=iteration++
-        # Visit every internal node i of the tree and get child branches indices and branch lengths
-        c1[j] = TreeSpeciesTip.child(i,1)
-        c2[j]  = TreeSpeciesTip.child(i,2)
-    
-        # Get the descendants of each child to know if they connect same or different species
-        c1descendants[j] = TreeSpeciesTip.getDescendantTaxa(c1[j])
-        c2descendants[j] = TreeSpeciesTip.getDescendantTaxa(c2[j])
-    
-        # Get a list of descendant species to know if node connects population of same or different species
-        c1splist[j] = [c1descendants[j][1].getName()]
-        if (c1descendants[j].size() > 1){
-            for (n in 2:c1descendants[j].size()){
-            c1splist[j].append([c1descendants[j][n].getName()])
-            }
-        }
-        c1splist[j].unique()
-    
-        c2splist[j] = [c2descendants[j][1].getName()]
-        if (c2descendants[j].size() > 1){
-            for (n in 2:c2descendants[j].size()){
-            c2splist[j].append([c2descendants[j][n].getName()])
-            }
-        }
-        c2splist[j].unique()
-    
-        # If node connects populations of same species, clamp the observed value to 0 to indicate that no speciation can be observed. It is only applicable if the species has known assignments. If node connects population of different species we assign moves to it so it can be sampled during MCMC.
-        if ((c1splist[j].size() == 1 & c2splist[j].size() == 1 & c1splist[j].contains("?")==FALSE & c2splist[j].contains("?")==FALSE) & ( c1splist[j][1] == c2splist[j][1])) {
-            branch_speciation_events[c1[j]] ~ dnPoisson(state_branch_rate[c1[j]]*TreeSpeciesTip.branchLength(c1[j]))
-            branch_speciation_events[c1[j]].clamp(0)
-            
-            branch_speciation_events[c2[j]] ~ dnPoisson(state_branch_rate[c2[j]]*TreeSpeciesTip.branchLength(c2[j]))
-            branch_speciation_events[c2[j]].clamp(0)
-    
+
+    # Now it comes the Trait Dependent Rates Protracted Speciation Tree
+    # Annotate node species using Fitch algorithm. This allow us to know if daughters of a node are conspecific (node is unambiguously assigned to one species) or heterospecific
+    # Note: SPECIES DATA must not have 0
+    for (i in 1:n_nodes){
+        if (! tree.isInternal(i)){
+          node_sp[i] <- [speciesData[speciesData.taxonIndex(tree.nodeName(i))][1]]
         } else {
-            branch_speciation_events[c1[j]] ~ dnPoisson(state_branch_rate[c1[j]]*TreeSpeciesTip.branchLength(c1[j]))
-            moves.append( mvRandomNaturalWalk(branch_speciation_events[c1[j]], weight=1))
-            branch_speciation_events[c1[j]].setValue(1)
-   
-            branch_speciation_events[c2[j]] ~ dnPoisson(state_branch_rate[c2[j]]*TreeSpeciesTip.branchLength(c2[j]))
-            moves.append(mvRandomNaturalWalk(branch_speciation_events[c2[j]], weight=1))
-            branch_speciation_events[c2[j]].setValue(1)
+          node_sp[i] <- append(node_sp[tree.child(i, 1)],
+                               node_sp[tree.child(i, 2)]
+                               )
+          node_sp[i].unique()
+          node_sp[i].sort()
+            }
         }
-    }
     
+    # If node connects populations of same species (node_sp only has one element that must have same value and be different from 0), clamp the observed value to 0 to indicate that no speciation was observed. 
+    # Note that, since we are dealing with natural numbers, unknown "?" states were replaced by 0 in node_sp container. That is the reason the species matrix must not contain the state 0.
+    # If node connects population of different species we assign moves to it so it can be sampled during MCMC.
+
+    for (i in (taxa.size()+1):(n_nodes)){
+        # 1. Children are branches that connect population nodes of same species
+        if (node_sp[i].size() == 1 & !node_sp[i].contains(0)){
+            branch_speciation_events[tree.child(i, 1)] ~ dnPoisson(branch_spCompletion[tree.child(i, 1)]*tree.branchLength(tree.child(i, 1)))
+            branch_speciation_events[tree.child(i, 1)].clamp(0)
+            branch_speciation_events[tree.child(i, 2)] ~ dnPoisson(branch_spCompletion[tree.child(i, 2)]*tree.branchLength(tree.child(i, 2)))
+            branch_speciation_events[tree.child(i, 2)].clamp(0)
+        }else{
+            branch_speciation_events[tree.child(i, 1)] ~ dnPoisson(branch_spCompletion[tree.child(i, 1)]*tree.branchLength(tree.child(i, 1)))
+            moves.append(mvRandomNaturalWalk(branch_speciation_events[tree.child(i, 1)], weight=10))
+            branch_speciation_events[tree.child(i, 1)].setValue(1)
+            branch_speciation_events[tree.child(i, 2)] ~ dnPoisson(branch_spCompletion[tree.child(i, 2)]*tree.branchLength(tree.child(i, 2)))
+            moves.append(mvRandomNaturalWalk(branch_speciation_events[tree.child(i, 2)], weight=10))
+            branch_speciation_events[tree.child(i, 2)].setValue(1)
+            }
+        }
+
     # Protracted likelihood
     for (i in 1:branch_speciation_events.size()){
         br_lnLikelihood[i] := branch_speciation_events[i].lnProbability()
@@ -394,7 +447,7 @@
         speciation_binary[i] := ifelse(branch_speciation_events[i] == 0, 0, 1)
         p_no_speciation[i] := ifelse(branch_speciation_events[i] == 0, 
                                      branch_speciation_events[i].probability(), 
-                                     dpoisson(0, state_branch_rate[i]*TreeSpeciesTip.branchLength(i), FALSE))
+                                     dpoisson(0, branch_spCompletion[i]*tree.branchLength(i), FALSE))
         p_speciation[i] := 1-p_no_speciation[i]
     }
     
@@ -409,10 +462,12 @@
     }
 
     # The population tree with speciation events as branch lengths
+    # Now we create a tree with speciation event as branch lengths.
+    # This will be use to evaluate the constraint that at least one branch on the path connecting two heterospecific populations must have one or more speciation events.
     topologyPopNames <- readBranchLengthTrees(TREE_PATH)[1]
     topologyPopNames.renumberNodes(tree)
     SpeciationBranchTreePopNames := fnTreeAssembly(topologyPopNames, branch_speciation_events)
-    
+  
     # The code below is used to constrain the search of speciation branch trees that are compatible with our observed species. 
     # For this we use a matrix which trait states indicate the species assignments, and populations with unknown identity are coded with "?"
     
@@ -421,6 +476,8 @@
     speciation ~ dnPhyloCTMC(tree=SpeciationBranchTreePopNames, Q=Qs, type="NaturalNumbers")
     
     speciation.clamp(speciesData)
+
+    # No we can create our model object to run the analyses.
     
     mymodel = model(branch_speciation_events)
     
@@ -441,19 +498,26 @@
                             birth_observed,
                             extinction_observed,
                             global_birth,
-                            global_death,
+                            global_extinction,
                             structuring_rate,
+                            structuring_rate_observed,
+                            global_structuring_rate,
                             birth,
                             extinction,
                             global_trans_rate,
                             transition_rates,
                             R,
-                            SpeciationComplRate,
-                            stateSpecificRates,
+                            global_spCompletion,
+                            spCompletion_relative,
+                            spCompletion,
+                            spCompletion_obs,
+                            spCompletion_hidden,
+                            effective_diversity,
+                            effective_diversity_obs,
                             filename= OUT_DIR + OUT_PREFIX +".Rates.log",
                             printgen= N_PRINT_LOG) )
     
-    # Monitor birth and death branch rates
+    # Monitor birth and extinction branch rates
     monitors.append( mnStochasticBranchRate(glhbdsp = timetree,
                                             printgen = N_PRINT_TREE,
                                             filename = OUT_DIR + OUT_PREFIX + ".BirthDeathBrRates.log") )
@@ -461,12 +525,14 @@
     
     # monitor reversible jumps hypotheses
     monitors.append( mnFile(is_birth_state_dependent,
-                            is_death_state_dependent,
+                            is_extinction_state_dependent,
                             is_bd_state_dependent,
                             is_reversible, 
                             is_spCompletion_state_dependent,
-                            is_death_hidden,
+                            is_spCompletion_hidden,
+                            is_extinction_hidden,
                             is_birth_hidden,
+                            is_effective_diversity_equal,
                             filename= OUT_DIR + OUT_PREFIX +".RJ.log",
                             printgen= N_PRINT_LOG) )
     
@@ -480,20 +546,6 @@
                                                       withStartStates = FALSE,
                                                       filename = OUT_DIR + OUT_PREFIX + ".traits.log") )
     
-    ##########################################################################
-    # Monitor tree with branch speciation events                             #
-    # This in the box does not work properly when the tree is summarized.    #
-    # I think it is because the object is a container of integers,           #
-    # so it is processed as discrete states.                                 #
-    # We used other way below, monitorin a trace with the speciation events. #
-    #monitors.append( mnExtNewick(                                           #
-    #                 filename = OUT_DIR + OUT_PREFIX + ".SpEvents.trees",   #
-    #                 isNodeParameter=TRUE,                                  #
-    #                 printgen=N_PRINT_TREE,                                 #
-    #                 separator=TAB,                                         #
-    #                 tree=tree,                                             #
-    #                 branch_speciation_events ) )                           #
-    ##########################################################################
 
     # Monitor trace speciation events on each branch (container called "end_")
     monitors.append( mnFile(end,
@@ -509,7 +561,7 @@
                      tree=tree, 
                      p_no_speciation,
                      p_speciation,
-                     state_branch_rate
+                     branch_spCompletion
                      ) )
 
     
@@ -524,41 +576,24 @@
     
     # The MCMC
     mymcmc = mcmc(mymodel, monitors, moves, nruns = N_RUNS, combine="mixed")
-    
-    mymcmc.run(N_GEN, checkpointFile = OUT_DIR + OUT_PREFIX + ".checkpoint", checkpointInterval= N_CHECK_INTERVAL )
-     
+    mymcmc.run(N_GEN, 
+               checkpointFile = OUT_DIR + OUT_PREFIX + ".checkpoint", 
+               checkpointInterval= N_CHECK_INTERVAL )
+
     ###################
     # Process Results #
     ###################
 
     # Summarize tree with number of speciation events.
 
-    ##################################################################################
-    ## This code in this box does not work well.                                     #
-    ## I think it is because it understands the annotation as discrete states.       #
-    #treeTrace_spevents = readTreeTrace(OUT_DIR + OUT_PREFIX + ".SpEvents.trees",    #
-    #                                burnin= BURN_IN )                               #
-    #mapTree(treeTrace_spevents,                                                     #
-    #        file = OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre",                      #
-    #        mean = FALSE                                                            #
-    #        )                                                                       #
-    ## The output needs some modification. We use a bash command to do it.           #
-    #command = "sed -i 's/=1}/}/g' " + OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre"  #
-    #system(command)                                                                 #
-    ##################################################################################
-
     # To properly summarized tree with number of speciation events we need to modify the file for processing.
-    # We used bash commands and call them within revbayes with the function system()
-    # First remove the [] from the file so it can be processed prperly.
-    command1 = "tr '[' '_' < " + OUT_DIR + OUT_PREFIX + ".SpEvents.log" + " > " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP.log"
-    system(command1)
-    command2 = "tr ']' ' ' < " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP.log" + " > " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP2.log"
-    system(command2)
-    command3 = "mv " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP2.log" + "  " + OUT_DIR + OUT_PREFIX + ".SpEvents.log"
-    system(command3)
-    command4 =  "rm " + OUT_DIR + OUT_PREFIX + ".SpEventsTEMP*.log"
-    system(command4)
-
+    # First remove the [] from the file so it can be processed properly.
+    # We use Python commands to make it cross-platform and call them within RevBayes with the function system()
+    
+    file_to_edit = OUT_DIR + OUT_PREFIX + ".SpEvents.log"
+    command_process = "python3 -c 'p=\"" + file_to_edit + "\"; s=open(p).read().replace(\"[\",\"_\").replace(\"]\",\"\"); open(p,\"w\").write(s)'"
+    system(command_process)
+    
     # Now we can read the trace and process it.
     sp_events_trace = readAncestralStateTrace(OUT_DIR + OUT_PREFIX + ".SpEvents.log")
     
@@ -572,8 +607,10 @@
                        burnin= BURN_IN)
     
     # Edit the tree output annotation name so we know what it is about.
-    command1 = "sed -i 's/anc_state_1/branch_speciation_events/g' " + OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre"
-    system(command1)
+    
+    file_to_edit = OUT_DIR + OUT_PREFIX + ".SpEvents.MAP.tre"
+    command_sed = "python3 -c 'p=\"" + file_to_edit + "\"; s=open(p).read().replace(\"anc_state_1\",\"branch_speciation_events\"); open(p,\"w\").write(s)'"
+    system(command_sed)
 
     # Summarize protracted tree with branch rates and speciation probabilities
     treeTrace_sprates = readTreeTrace(OUT_DIR + OUT_PREFIX + ".Protracted.trees",
