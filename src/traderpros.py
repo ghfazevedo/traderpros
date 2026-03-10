@@ -22,7 +22,7 @@ def create_revscript(args):
     TRAIT_PATH   =  "{args.trait_path}"
     SP_MATRIX    =   "{args.sp_matrix}"
     
-    # Do you want to use Tensor phylo? Sometimes analysys freeze when using it. Not sure why.
+    # Do you want to use Tensor phylo? Sometimes analysis crashes when using it. Not sure why.
     USE_TENSOR =  "{args.use_tensor}"
     # TensorPhylo path if TRUE
     TENSOR_PATH  =  "{args.tensor_path if args.use_tensor else 'NULL'}"
@@ -719,8 +719,8 @@ def main():
     args.tree_path   = os.path.abspath(args.tree_path)
     args.trait_path  = os.path.abspath(args.trait_path)
     args.sp_matrix   = os.path.abspath(args.sp_matrix)
-    if args.tensor_path:
-        args.tensor_path = os.path.abspath(args.tensor_path)
+    #if args.tensor_path:
+    #    args.tensor_path = os.path.abspath(args.tensor_path)
 
     # Convert 0 to a small value for RevBays Dirichlet
     if "0" in args.root_prior:
