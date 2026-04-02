@@ -62,16 +62,24 @@ setup(
         'numpy',
         'dendropy',
         'seaborn',
-        'matplotlib'
+        'matplotlib',
+        'joypy',
+        'scipy'
     ],
     entry_points={
         'console_scripts': [
             'traderpros = traderpros.traderpros:main',
             'conspecific_binary=traderpros.conspecific_binary:main',
             'conspecific_probs=traderpros.conspecific_probs:main',
-            'sum_and_plot=traderpros.sum_and_plot:main',
             'traderpros_sim=traderpros.traderpros_sim:main',
-            'traderprosHiSSE_sim=traderpros.traderprosHiSSE_sim:main'
+            'plot_rates=traderpros.plot_rates:main',
+            'plot_rates_observed=traderpros.plot_rates_observed:main',
+            'plot_descriptors=traderpros.plot_descriptors:main',
+            'plot_descriptors_obs=traderpros.plot_descriptors_obs:main',
+            'plot_rj=traderpros.plot_rj:main',
+            'sum_stats=traderpros.sum_stats:main',
+            'plot_trees=traderpros.plot_trees:main',
+            'traderplot=traderpros.traderplot:main'
         ]
     },
     classifiers=[

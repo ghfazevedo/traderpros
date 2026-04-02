@@ -47,12 +47,9 @@ def create_revscript(args):
     # Global transition rate prior exponential distribution rate (1/mean) parameter
     TRANS_PRIOR_PARAM  <-  {args.transition_prior_param} 
     
-    # Global birth rate prior exponential distribution rate (1/mean) parameter
-    BIRTH_PRIOR_PARAM  <-  {args.birth_prior_param}  
-    
-    # Global death (extinction) prior exponential distribution rate (1/mean) parameter
-    EXTINCTION_PRIOR_PARAM   <-  {args.death_prior_param}  
-    
+    # Global net population formation rate parameter (equivalent to the diversification when using species as terminals instead of populations) (1/mean) 
+    STRUCTURE_PRIOR_PARAM  <-  {args.net_pop_prior_param}  
+   
     # Global speciation completion prior exponential distribution rate (1/mean) parameter
     SPECIATION_PRIOR_PARAM  <-  {args.speciation_prior_param}  
     
@@ -131,7 +128,7 @@ def create_revscript(args):
     data <- readDiscreteCharacterData(TRAIT_PATH)
     num_states <- data.getStateDescriptions().size()
     data_exp <- data.expandCharacters( NUM_HIDDEN )
-    # Get number of birth and extinction rates
+    # Get number of pop_formation and extinction rates
     num_rates <- num_states * NUM_HIDDEN
     
     # Read species matrix, which map population to species using natural numbers (excluding 0) for different species. 
@@ -145,35 +142,39 @@ def create_revscript(args):
     # Note that the birth rates are the speciation initiation (or population formation) rates in this model
     
     # Observed speciation and extinction
-    global_birth ~ dnExponential(BIRTH_PRIOR_PARAM)
-    global_birth.setValue( (NUM_TOTAL_POPULATIONS-2) / tree_length )
-    global_extinction ~ dnExponential(EXTINCTION_PRIOR_PARAM)
-    global_extinction.setValue( global_birth / 10 )
-    
-    moves.append( mvScale(global_birth,weight=1.0) )
-    moves.append( mvScale(global_extinction,weight=1.0) )
-    
-    birth_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
+    # First we define the global net population formation rate (equivalent to the diversification when using species as terminals instead of populations)
+    global_net_pop_formation ~ dnExponential(STRUCTURE_PRIOR_PARAM)
+    global_net_pop_formation.setValue( (NUM_TOTAL_POPULATIONS-2) / tree_length )
+    moves.append( mvScale(global_net_pop_formation,weight=1.0) )
+
+    global_pop_turnover ~ dnBeta(1.0, 1.0) 
+    moves.append( mvSlide(global_pop_turnover, delta=1.0, tune=true, weight=1.0) )
+
+    denom := abs(1.0 - global_pop_turnover) 
+    global_pop_formation := global_net_pop_formation / denom
+    global_extinction := (global_pop_turnover * global_net_pop_formation) / denom
+
+    pop_formation_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
     extinction_relative ~ dnReversibleJumpMixture( simplex(rep(1, num_states)), dnDirichlet(rep(1, num_states)), p=0.5 )
     
-    moves.append( mvRJSwitch(birth_relative , weight=1.0) )
+    moves.append( mvRJSwitch(pop_formation_relative , weight=1.0) )
     moves.append( mvRJSwitch(extinction_relative , weight=1.0) )
-    moves.append( mvDirichletSimplex( birth_relative, weight=1 ) )
+    moves.append( mvDirichletSimplex( pop_formation_relative, weight=1 ) )
     moves.append( mvDirichletSimplex( extinction_relative, weight=1 ) )
     
-    birth_observed := birth_relative * global_birth
+    pop_formation_observed := pop_formation_relative * global_pop_formation
     extinction_observed := extinction_relative * global_extinction
    
-    # Hidden birth rates based on discretized continuous distribution
-    ln_birth_hidden_mean <- ln(1.0)
-    birth_hidden_sd ~ dnReversibleJumpMixture( 0.0, dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR ), p=0.5 )
-    moves.append( mvScale(birth_hidden_sd, lambda=1, tune=true, weight=1.0) )
-    moves.append( mvRJSwitch(birth_hidden_sd , weight=1.0) )
+    # Hidden pop_formation rates based on discretized continuous distribution
+    ln_pop_formation_hidden_mean <- ln(1.0)
+    pop_formation_hidden_sd ~ dnReversibleJumpMixture( 0.0, dnExponential( 1.0 / MEAN_HIDDEN_HYPERPRIOR ), p=0.5 )
+    moves.append( mvScale(pop_formation_hidden_sd, lambda=1, tune=true, weight=1.0) )
+    moves.append( mvRJSwitch(pop_formation_hidden_sd , weight=1.0) )
 
-    birth_hidden_unormalized := fnDiscretizeDistribution( dnLognormal(ln_birth_hidden_mean, birth_hidden_sd), NUM_HIDDEN )
+    pop_formation_hidden_unormalized := fnDiscretizeDistribution( dnLognormal(ln_pop_formation_hidden_mean, pop_formation_hidden_sd), NUM_HIDDEN )
     
     # Normalize the hidden so the sum is 1
-    birth_hidden := birth_hidden_unormalized / sum(birth_hidden_unormalized)
+    pop_formation_hidden := pop_formation_hidden_unormalized / sum(pop_formation_hidden_unormalized)
     
     # Repeat for the extinction rates
     ln_extinction_hidden_mean <- ln(1.0)
@@ -185,56 +186,66 @@ def create_revscript(args):
     extinction_hidden := extinction_hidden_unormalized / sum(extinction_hidden_unormalized)
     
     # Create variables to track the probability of the state dependent model
-    is_birth_state_dependent := ifelse( birth_relative == simplex(rep(1,num_states)), 0.0, 1.0)
+    is_pop_formation_state_dependent := ifelse( pop_formation_relative == simplex(rep(1,num_states)), 0.0, 1.0)
     is_extinction_state_dependent := ifelse( extinction_relative == simplex(rep(1,num_states)), 0.0, 1.0)
-    is_bd_state_dependent := ifelse( (extinction_relative == simplex(rep(1,num_states)) & birth_relative == simplex(rep(1,num_states))), 0.0, 1.0)
+    is_bd_state_dependent := ifelse( (extinction_relative == simplex(rep(1,num_states)) & pop_formation_relative == simplex(rep(1,num_states))), 0.0, 1.0)
     
-    is_extinction_hidden := ifelse( birth_hidden_sd == 0, 0.0, 1.0)
-    is_birth_hidden := ifelse( extinction_hidden_sd == 0, 0.0, 1.0)
+    is_extinction_hidden := ifelse( pop_formation_hidden_sd == 0, 0.0, 1.0)
+    is_pop_formation_hidden := ifelse( extinction_hidden_sd == 0, 0.0, 1.0)
     
     # Put the two rates together
     for (j in 1:NUM_HIDDEN) {{
         for (i in 1:num_states) {{
             index = i+(j*num_states)-num_states
-            birth[index] := birth_observed[i] * birth_hidden[j]
+            pop_formation[index] := pop_formation_observed[i] * pop_formation_hidden[j]
             extinction[index] := extinction_observed[i] * extinction_hidden[j]
         }}
     }}
 
-    # The structuring rate (equivalent to diversification when tips are species)
-    structuring_rate_observed := birth_observed - extinction_observed
-    global_structuring_rate := global_birth - global_extinction
-    structuring_rate :=  birth - extinction
+    # The state dependent net_pop_formation rate (equivalent to state dependent net diversification when tips are species)
+    net_pop_formation_rate_observed := pop_formation_observed - extinction_observed
+    net_pop_formation_rate :=  pop_formation - extinction
 
     # Global trait transition
     global_trans_rate ~  dnExp(TRANS_PRIOR_PARAM)
     moves.append( mvScale( global_trans_rate, weight=1 ) )
     
     # Relative Transition with reversible jump to test for irreversibility
-    n_obs_rates = num_states * (num_states-1)
-    if(n_obs_rates > 2){{
-        irreverssible_free ~ dnDirichlet(rep(1, n_obs_rates/2))
-        moves.append( mvDirichletSimplex( irreverssible_free, weight=1 ) )
-        for (i in 1:n_obs_rates){{
-            if(i <= n_obs_rates/2){{
-                irreverssible[i] <- irreverssible_free[i]
-            }}else{{
-                irreverssible[i] <- 0
+    # Note that, if there are more then 2 observed states, irreversibility means all the lower half of the Q matrix is 0.
+    # It might not make sense for all types of data. If it does not make sense for your data you should ignore or adapt it.
+ 
+    n_obs_transitions = num_states * (num_states - 1)
+    irreversible_free ~ dnDirichlet(rep(1, n_obs_transitions / 2))
+    if (irreversible_free.size() > 1){{
+       moves.append( mvDirichletSimplex( irreversible_free, weight=1 ) )
+    }}
+    
+    free_idx = 1
+    flat_idx = 1
+    
+    for (i in 1:num_states) {{
+        for (j in 1:num_states) {{
+            if (i != j) {{
+                if (j > i) {{
+                    irreversible[flat_idx] := irreversible_free[free_idx]
+                    free_idx += 1
+                }} else {{
+                    irreversible[flat_idx] <- 0.0
+                }}
+                flat_idx += 1
             }}
         }}
-    }}else{{
-        irreverssible <- simplex(1,0)
     }}
 
-    relative_transition ~ dnReversibleJumpMixture( simplex(irreverssible), dnDirichlet(rep(1, n_obs_rates)), p=0.5 )
+    relative_transition ~ dnReversibleJumpMixture( simplex(irreversible), dnDirichlet(rep(1, n_obs_transitions)), p=0.5 )
     
     moves.append( mvRJSwitch(relative_transition , weight=1.0) )
     moves.append( mvDirichletSimplex( relative_transition, weight=1 ) )
     
     # Track probability of reversibility (0 means no, 1 means yes)
-    is_reversible := ifelse( relative_transition == simplex(irreverssible), 0.0, 1.0)
+    is_reversible := ifelse( relative_transition == simplex(irreversible), 0.0, 1.0)
     
-    # The trait transition without hidden
+    # The observed-trait transition without hidden
     transition_rates := relative_transition * global_trans_rate
     
     # Transition between hidden states
@@ -260,7 +271,7 @@ def create_revscript(args):
     if (USE_TENSOR == "yes"){{
         timetree ~ dnGLHBDSP(
             rootAge     = root,
-            lambda      = birth,
+            lambda      = pop_formation,
             mu          = extinction,
             rho         = rho,
             eta         = rate_matrix,
@@ -273,7 +284,7 @@ def create_revscript(args):
     }} else {{
         timetree ~ dnCDBDP( 
             rootAge           = root,
-            speciationRates   = birth,
+            speciationRates   = pop_formation,
             extinctionRates   = extinction,
             Q                 = rate_matrix,
             condition         = "time",
@@ -333,7 +344,7 @@ def create_revscript(args):
     moves.append(mvSimplex(spCompletion_relative, weight=1))
 
     # State specific rates
-    spCompletion_obs := spCompletion_relative * global_spCompletion
+    spCompletion_observed := spCompletion_relative * global_spCompletion
 
     # Hidden speciation completion
     ln_completion_hidden_mean <- ln(1.0)
@@ -352,12 +363,18 @@ def create_revscript(args):
     for (j in 1:NUM_HIDDEN) {{
         for (i in 1:num_states) {{
             index = i+(j*num_states)-num_states
-            spCompletion[index] := spCompletion_obs[i] *spCompletion_hidden[j]
+            spCompletion[index] := spCompletion_observed[i] *spCompletion_hidden[j]
         }}
     }}
 
-    # Create variable to track effective diversification rates.
-    # This is the rate at species does not go extinct and at least one of the events happen: population formation, speciation completion, tstate transition
+    # Create variable to track useful descriptors of the diversification process
+    # Net population formation was already defined above.
+    # Global turnover is defined, but observed and state dependent are not. We can create them now
+    pop_turnover := extinction / pop_formation
+    pop_turnover_observed := extinction_observed / pop_formation_observed
+
+    # Evolvability is net rate of any evolutionary outcome (population formation, speciation completion, or trait change) minus extinction.
+    # We use the loop above to get the rate of state change for an specific state. This is the negative of the diagonal of the Q matrix  
     index=1
     for (i in 1:rate_matrix.size() ){{
         for (j in 1:rate_matrix.size() ){{
@@ -368,40 +385,48 @@ def create_revscript(args):
         }}
     }}
 
-    effective_diversity :=  birth + 
-                            spCompletion + 
-                            rate_of_leaving_state -
-                            extinction
+    # The state specific evolvability
+    evolvability := pop_formation + 
+                    spCompletion + 
+                    rate_of_leaving_state -
+                    extinction
 
-    # Initialize the first observed state with all its indices
-    first_vec = [1]
-    for (h in 1:(NUM_HIDDEN-1)) {{
-        k = 1 + h * num_states
-        first_vec.append(k)
-    }}
-    indexes_of_effective_diversity = [ first_vec ]
-    
-    # Now for the remaining observed states
-    for (i in 2:num_states) {{
-        idx_vec = [i]
-        for (h in 1:(NUM_HIDDEN-1)) {{
-            k = i + h * num_states
-            idx_vec.append(k)
-        }}
-        indexes_of_effective_diversity.append(idx_vec)
-    }}
-    
-    for (i in 1:num_states) {{
-        for (k in 1:NUM_HIDDEN){{
-            to_sum[i][k] := effective_diversity[indexes_of_effective_diversity[i][k]]
+    # The observed states evolvability
+    # We first create a Q matrix only with the observed transition rates
+    Q_observed := fnFreeK(transition_rates, rescaled=FALSE)
+    # We use the same loop as above to get the rate of leaving a state
+    index=1
+    for (i in 1:Q_observed.size() ){{
+        for (j in 1:Q_observed.size() ){{
+            if (i==j){{
+                rate_of_leaving_state_observed[index] :=  -1*Q_observed[i][j]
+                index = index+1
+            }}
         }}
     }}
 
-   for (i in 1:to_sum.size() ){{
-     effective_diversity_obs[i] := sum(to_sum[i])
-   }}
+    evolvability_observed := pop_formation_observed + 
+                             spCompletion_observed + 
+                             rate_of_leaving_state_observed -
+                             extinction_observed
+    
+    global_evolvability := global_pop_formation + 
+                           global_spCompletion + 
+                           global_trans_rate -
+                           global_extinction
 
-    is_effective_diversity_equal := ifelse( simplex(abs(effective_diversity_obs)) == simplex(rep(1, num_states)), 1, 0)
+
+    # The state specific speciation success is the proportion of surviving populations that complete speciation.
+    # Higher values means that we expect to see more species with fewer populations. Note that this is a rough expectation since the number of species depend on the tree topology and branch lengths.
+    speciation_success := spCompletion / (pop_formation - extinction)
+    speciation_success_observed := spCompletion_observed / (pop_formation_observed - extinction_observed)
+    global_speciation_success := global_spCompletion / (global_pop_formation - global_extinction)
+
+    # Ephemerality Ratio of population turnover to speciation success. The higher the value, the more ephemeral is the new population formed
+    ephemerality := pop_turnover / speciation_success
+    ephemerality_observed := pop_turnover_observed / speciation_success_observed
+    global_ephemerality := global_pop_turnover / global_speciation_success
+
 
     # Branch rates
     # Now we can compute the speciation completion rates on each branch based on the time spent on each character on that branch.
@@ -503,16 +528,16 @@ def create_revscript(args):
                               printgen=N_PRINT_LOG) )
     
     # monitor rates
-    monitors.append( mnFile(birth_hidden,
+    monitors.append( mnFile(pop_formation_hidden,
                             extinction_hidden,
-                            birth_observed,
+                            pop_formation_observed,
                             extinction_observed,
-                            global_birth,
+                            global_pop_formation,
                             global_extinction,
-                            structuring_rate,
-                            structuring_rate_observed,
-                            global_structuring_rate,
-                            birth,
+                            net_pop_formation_rate,
+                            net_pop_formation_rate_observed,
+                            global_net_pop_formation,
+                            pop_formation,
                             extinction,
                             global_trans_rate,
                             transition_rates,
@@ -520,29 +545,46 @@ def create_revscript(args):
                             global_spCompletion,
                             spCompletion_relative,
                             spCompletion,
-                            spCompletion_obs,
+                            spCompletion_observed,
                             spCompletion_hidden,
-                            effective_diversity,
-                            effective_diversity_obs,
                             filename= OUT_DIR + OUT_PREFIX +".Rates.log",
                             printgen= N_PRINT_LOG) )
+
+    # Monitor Descriptors
+    monitors.append( mnFile(net_pop_formation_rate,
+                        net_pop_formation_rate_observed,
+                        global_net_pop_formation,
+                        pop_turnover,
+                        pop_turnover_observed,
+                        global_pop_turnover,
+                        evolvability,
+                        evolvability_observed,
+                        global_evolvability,
+                        speciation_success,
+                        speciation_success_observed,
+                        global_speciation_success,
+                        ephemerality,
+                        ephemerality_observed,
+                        global_ephemerality,
+                        filename= OUT_DIR + OUT_PREFIX +".Descriptors.log",
+                        printgen= N_PRINT_LOG) )
+
     
-    # Monitor birth and extinction branch rates
+    # Monitor pop_formation and extinction branch rates
     monitors.append( mnStochasticBranchRate(glhbdsp = timetree,
                                             printgen = N_PRINT_TREE,
                                             filename = OUT_DIR + OUT_PREFIX + ".BirthDeathBrRates.log") )
     
     
     # monitor reversible jumps hypotheses
-    monitors.append( mnFile(is_birth_state_dependent,
+    monitors.append( mnFile(is_pop_formation_state_dependent,
                             is_extinction_state_dependent,
                             is_bd_state_dependent,
                             is_reversible, 
                             is_spCompletion_state_dependent,
                             is_spCompletion_hidden,
                             is_extinction_hidden,
-                            is_birth_hidden,
-                            is_effective_diversity_equal,
+                            is_pop_formation_hidden,
                             filename= OUT_DIR + OUT_PREFIX +".RJ.log",
                             printgen= N_PRINT_LOG) )
     
@@ -697,8 +739,7 @@ def main():
     parser.add_argument('-mhdd', '--mean_hidden_hyperprior', type=float, default=0.587405, help='Mean hidden hyperprior (default: 0.587405).')
     parser.add_argument('-nproc', '--num_processors', type=int, default=4, help='Number of processors (default: 4). only used if using TensorPhylo plugin.')
     parser.add_argument('-trpr', '--transition_prior_param', type=float, default=10, help='Transition prior parameter (default: 10).')
-    parser.add_argument('-btpr', '--birth_prior_param', type=float, default=1, help='Birth prior parameter (default: 1).')
-    parser.add_argument('-dtpr', '--death_prior_param', type=float, default=1, help='Death prior parameter (default: 1).')
+    parser.add_argument('-stpr', '--net_pop_prior_param', type=float, default=1, help='Global net population formation rate parameter. Eequivalent to the diversification when using species as terminals instead of populations: pop_formation - death (Default: 1).')
     parser.add_argument('-sppr', '--speciation_prior_param', type=float, default=1, help='Speciation prior parameter (default: 1).')
     parser.add_argument('-rp', '--root_prior', type=str, default="1,1,1,1", help='A comma-separated list of probabilities for the all 4 root states (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1 Hidden B).  It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0.')
     parser.add_argument('-mxsp', '--max_num_species', type=int, required=True, help='Max number of species (mandatory).')
