@@ -12,6 +12,8 @@ def main():
     parser.add_argument('-n', '--n_observed_states', type=int, default=2, help="Number of observed states")
     parser.add_argument('-H', '--n_hidden_states', type=int, default=2, help="Number of hidden states")
     parser.add_argument('-f','--force', choices=['yes', 'no'], default='no', help="If yes, it forces to run without checking the existence of an output folder. It may erase previous results")
+    parser.add_argument('-b', '--burn_in', type=float, default=0.10, help="Burn-in percentage")
+    parser.add_argument('--outliers', choices=['include', 'exclude'], default='include', help="Include or exclude outliers")
 
     args = parser.parse_args()
 
@@ -32,12 +34,12 @@ def main():
 
     # Commands to run
     commands = [
-        ["plot_rates", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "-H", str(args.n_hidden_states), "--outliers", "exclude", "-f", "yes"],
-        ["plot_rates_observed", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "--outliers", "exclude", "-f", "yes"],
-        ["plot_descriptors", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "-H", str(args.n_hidden_states), "--outliers", "exclude", "-f", "yes"],
-        ["plot_descriptors_obs", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "--outliers", "exclude", "-f", "yes"],
-        ["plot_rj", "-i", str(args.input), "-o", str(args.output), "-f", "yes"],
-        ["plot_trees", "-i", str(args.input), "-o", str(args.output), "-f", "yes"],
+        ["plot_rates", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "-H", str(args.n_hidden_states), "--outliers", str(args.outliers), "-f", "yes", "-b", str(args.burn_in)],
+        ["plot_rates_observed", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "--outliers", str(args.outliers), "-f", "yes", "-b", str(args.burn_in)],
+        ["plot_descriptors", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "-H", str(args.n_hidden_states), "--outliers", str(args.outliers), "-f", "yes", "-b", str(args.burn_in)],
+        ["plot_descriptors_obs", "-i", str(args.input), "-o", str(args.output), "-n", str(args.n_observed_states), "--outliers", str(args.outliers), "-f", "yes", "-b", str(args.burn_in)],
+        ["plot_rj", "-i", str(args.input), "-o", str(args.output), "-f", "yes", "-b", str(args.burn_in)],
+        ["plot_trees", "-i", str(args.input), "-o", str(args.output), "-f", "yes", "-b", str(args.burn_in)],
     ]
     
     for cmd in commands:

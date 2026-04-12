@@ -77,7 +77,7 @@ setup(
             'plot_descriptors=traderpros.plot_descriptors:main',
             'plot_descriptors_obs=traderpros.plot_descriptors_obs:main',
             'plot_rj=traderpros.plot_rj:main',
-            'sum_stats=traderpros.sum_stats:main',
+            'traderstats=traderpros.traderstats:main',
             'plot_trees=traderpros.plot_trees:main',
             'traderplot=traderpros.traderplot:main'
         ]
