@@ -71,7 +71,7 @@ setup(
             'traderpros = traderpros.traderpros:main',
             'conspecific_binary=traderpros.conspecific_binary:main',
             'conspecific_probs=traderpros.conspecific_probs:main',
-            'traderpros_sim=traderpros.traderpros_sim:main',
+            'tradersim=traderpros.tradersim:main',
             'plot_rates=traderpros.plot_rates:main',
             'plot_rates_observed=traderpros.plot_rates_observed:main',
             'plot_descriptors=traderpros.plot_descriptors:main',

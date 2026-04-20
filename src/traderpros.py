@@ -739,7 +739,7 @@ def main():
     parser.add_argument('-mhdd', '--mean_hidden_hyperprior', type=float, default=0.587405, help='Mean hidden hyperprior (default: 0.587405).')
     parser.add_argument('-nproc', '--num_processors', type=int, default=4, help='Number of processors (default: 4). only used if using TensorPhylo plugin.')
     parser.add_argument('-trpr', '--transition_prior_param', type=float, default=10, help='Transition prior parameter (default: 10).')
-    parser.add_argument('-stpr', '--net_pop_prior_param', type=float, default=1, help='Global net population formation rate parameter. Eequivalent to the diversification when using species as terminals instead of populations: pop_formation - death (Default: 1).')
+    parser.add_argument('-nppr', '--net_pop_prior_param', type=float, default=1, help='Global net population formation rate parameter. Eequivalent to the diversification when using species as terminals instead of populations: pop_formation - death (Default: 1).')
     parser.add_argument('-sppr', '--speciation_prior_param', type=float, default=1, help='Speciation prior parameter (default: 1).')
     parser.add_argument('-rp', '--root_prior', type=str, default="1,1,1,1", help='A comma-separated list of probabilities for the all 4 root states (Observed 0 Hidden A, Observed 1 Hidden A, Observed 0 Hidden B, Observed 1 Hidden B).  It could be values that sum to 1, or relative weights for a simplex. E.g. -rp 1,0,1,0 will translate to 0.5, 0.0, 0.5, 0.0.')
     parser.add_argument('-mxsp', '--max_num_species', type=int, required=True, help='Max number of species (mandatory).')
